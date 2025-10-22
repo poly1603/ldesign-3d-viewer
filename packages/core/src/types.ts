@@ -1,17 +1,34 @@
 /**
  * Hotspot marker in the panorama
+ * @template T - Type of custom data
  */
-export interface Hotspot {
+export interface Hotspot<T = Record<string, unknown>> {
   /** Unique identifier */
   id: string;
   /** Position in spherical coordinates (theta: horizontal angle, phi: vertical angle) */
-  position: { theta: number; phi: number };
+  position: SphericalPosition;
   /** Text label */
   label?: string;
-  /** Custom data */
-  data?: any;
+  /** Custom data with type safety */
+  data?: T;
   /** Custom icon/element */
   element?: HTMLElement;
+  /** Hotspot type/category */
+  type?: string;
+  /** Is hotspot visible */
+  visible?: boolean;
+}
+
+/**
+ * Spherical position coordinates
+ */
+export interface SphericalPosition {
+  /** Horizontal angle in radians */
+  theta: number;
+  /** Vertical angle in radians */
+  phi: number;
+  /** Optional radius (default: sphere radius) */
+  radius?: number;
 }
 
 /**
@@ -122,7 +139,7 @@ export interface IPanoramaViewer {
   loadImage(url: string | CubemapImages, transition?: boolean): Promise<void>;
   /** Preload images for faster switching */
   preloadImages(urls: string[]): Promise<void>;
-  
+
   // Camera control
   /** Reset camera to initial position */
   reset(): void;
@@ -131,20 +148,20 @@ export interface IPanoramaViewer {
   /** Set the camera rotation */
   setRotation(x: number, y: number, z: number): void;
   /** Animate camera along path */
-  animateCameraPath(path: any[]): void;
-  
+  animateCameraPath(path: CameraPathPoint[]): void;
+
   // Auto rotation
   /** Enable auto rotation */
   enableAutoRotate(): void;
   /** Disable auto rotation */
   disableAutoRotate(): void;
-  
+
   // Gyroscope
   /** Enable gyroscope controls (mobile only) */
   enableGyroscope(): Promise<boolean>;
   /** Disable gyroscope controls */
   disableGyroscope(): void;
-  
+
   // Hotspots
   /** Add a hotspot marker */
   addHotspot(hotspot: Hotspot): void;
@@ -152,7 +169,7 @@ export interface IPanoramaViewer {
   removeHotspot(id: string): void;
   /** Get all hotspots */
   getHotspots(): Hotspot[];
-  
+
   // Fullscreen
   /** Enter fullscreen mode */
   enterFullscreen(): Promise<void>;
@@ -160,15 +177,15 @@ export interface IPanoramaViewer {
   exitFullscreen(): void;
   /** Check if in fullscreen */
   isFullscreen(): boolean;
-  
+
   // Screenshot
   /** Take a screenshot */
   screenshot(width?: number, height?: number): string;
-  
+
   // View limits
   /** Set view limits */
   setViewLimits(limits: ViewLimits | null): void;
-  
+
   // Mini map
   /** Show mini map */
   showMiniMap(): void;
@@ -176,7 +193,7 @@ export interface IPanoramaViewer {
   hideMiniMap(): void;
   /** Toggle mini map visibility */
   toggleMiniMap(): void;
-  
+
   // Color adjustment
   /** Set brightness (-1 to 1) */
   setBrightness(value: number): void;
@@ -188,27 +205,134 @@ export interface IPanoramaViewer {
   setExposure(value: number): void;
   /** Reset color adjustments */
   resetColorAdjustments(): void;
-  
+
   // Watermark
   /** Show watermark */
-  showWatermark(options?: any): void;
+  showWatermark(options?: WatermarkOptions): void;
   /** Hide watermark */
   hideWatermark(): void;
-  
+
   // Performance
   /** Get performance stats */
-  getPerformanceStats(): any;
+  getPerformanceStats(): PerformanceStats | null;
   /** Show/hide performance overlay */
   togglePerformanceOverlay(): void;
   /** Set quality preset */
-  setQualityPreset(preset: 'ultra' | 'high' | 'medium' | 'low'): void;
-  
+  setQualityPreset(preset: QualityPreset): void;
+
   // Rendering
   /** Force render (useful when renderOnDemand is enabled) */
   render(): void;
-  
+
   // Cleanup
   /** Destroy the viewer and clean up resources */
   dispose(): void;
+}
+
+/**
+ * Quality preset levels
+ */
+export type QualityPreset = 'ultra' | 'high' | 'medium' | 'low';
+
+/**
+ * Performance statistics
+ */
+export interface PerformanceStats {
+  /** Frames per second */
+  fps: number;
+  /** Frame time in milliseconds */
+  frameTime: number;
+  /** Number of render calls */
+  renderCalls: number;
+  /** Number of triangles */
+  triangles: number;
+  /** Memory statistics (if available) */
+  memory?: {
+    usedJSHeapSize: number;
+    totalJSHeapSize: number;
+    jsHeapSizeLimit: number;
+  };
+}
+
+/**
+ * Watermark options
+ */
+export interface WatermarkOptions {
+  /** Watermark text */
+  text?: string;
+  /** Watermark image URL */
+  imageUrl?: string;
+  /** Position */
+  position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'center';
+  /** Opacity (0-1) */
+  opacity?: number;
+  /** Size */
+  size?: number;
+  /** Custom CSS */
+  style?: Partial<CSSStyleDeclaration>;
+}
+
+/**
+ * Camera path point
+ */
+export interface CameraPathPoint {
+  /** Camera position */
+  position: { x: number; y: number; z: number };
+  /** Camera rotation */
+  rotation: { x: number; y: number; z: number };
+  /** Field of view */
+  fov?: number;
+  /** Duration to this point (ms) */
+  duration?: number;
+}
+
+/**
+ * Rotation coordinates
+ */
+export interface RotationCoordinates {
+  /** X rotation in radians */
+  x: number;
+  /** Y rotation in radians */
+  y: number;
+  /** Z rotation in radians */
+  z: number;
+}
+
+/**
+ * Position coordinates
+ */
+export interface PositionCoordinates {
+  /** X position */
+  x: number;
+  /** Y position */
+  y: number;
+  /** Z position */
+  z: number;
+}
+
+/**
+ * Size dimensions
+ */
+export interface Dimensions {
+  /** Width */
+  width: number;
+  /** Height */
+  height: number;
+}
+
+/**
+ * Texture information
+ */
+export interface TextureInfo {
+  /** Texture URL */
+  url: string;
+  /** Width in pixels */
+  width: number;
+  /** Height in pixels */
+  height: number;
+  /** Size in bytes */
+  size: number;
+  /** Format */
+  format: string;
 }
 

@@ -1,11 +1,42 @@
 <template>
-  <div ref="containerRef" class="panorama-viewer" :style="containerStyle"></div>
+  <div ref="containerRef" class="panorama-viewer" :style="containerStyle">
+    <!-- 默认插槽 - 用于自定义UI叠加层 -->
+    <slot></slot>
+    
+    <!-- 加载插槽 -->
+    <slot v-if="isLoading" name="loading" :progress="loadingProgress">
+      <div class="default-loading">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">{{ loadingProgress.toFixed(0) }}%</div>
+      </div>
+    </slot>
+    
+    <!-- 错误插槽 -->
+    <slot v-if="error" name="error" :error="error">
+      <div class="default-error">
+        <p>{{ error.message }}</p>
+      </div>
+    </slot>
+    
+    <!-- 控制器插槽 -->
+    <slot name="controls" :viewer="viewerInstance" :methods="exposedMethods"></slot>
+    
+    <!-- 信息插槽 -->
+    <slot name="info" :stats="performanceStats"></slot>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
-import { PanoramaViewer as CoreViewer } from '@panorama-viewer/core';
-import type { ViewerOptions, Hotspot, ViewLimits, CubemapImages } from '@panorama-viewer/core';
+import { ref, onMounted, onBeforeUnmount, watch, computed, provide, reactive, toRefs } from 'vue';
+import { 
+  PanoramaViewer as CoreViewer,
+  EventBus,
+  type ViewerOptions, 
+  type Hotspot, 
+  type ViewLimits, 
+  type CubemapImages,
+  type PerformanceStats 
+} from '@panorama-viewer/core';
 
 export interface PanoramaViewerProps {
   image: string | CubemapImages;
@@ -49,11 +80,20 @@ const emit = defineEmits<{
 
 const containerRef = ref<HTMLElement>();
 const viewerInstance = ref<CoreViewer | null>(null);
+const eventBus = new EventBus();
+const isLoading = ref(false);
+const loadingProgress = ref(0);
+const error = ref<Error | null>(null);
+const performanceStats = ref<PerformanceStats | null>(null);
 
 const containerStyle = computed(() => ({
   width: props.width,
   height: props.height,
 }));
+
+// 提供给子组件
+provide('panoramaViewer', viewerInstance);
+provide('eventBus', eventBus);
 
 onMounted(() => {
   if (!containerRef.value) return;
@@ -72,15 +112,36 @@ onMounted(() => {
       viewLimits: props.viewLimits,
       keyboardControls: props.keyboardControls,
       renderOnDemand: props.renderOnDemand,
-      onProgress: (progress: number) => emit('progress', progress),
+      enablePerformanceMonitor: true,
     };
 
-    viewerInstance.value = new CoreViewer(options);
+    viewerInstance.value = new CoreViewer(options, eventBus);
 
-    // Setup hotspot click listener
-    containerRef.value.addEventListener('hotspotclick', ((e: CustomEvent) => {
-      emit('hotspotClick', e.detail.hotspot);
-    }) as EventListener);
+    // 订阅事件
+    eventBus.on('image:loading', ({ progress }) => {
+      isLoading.value = true;
+      loadingProgress.value = progress;
+      emit('progress', progress);
+    });
+
+    eventBus.on('image:loaded', () => {
+      isLoading.value = false;
+      error.value = null;
+    });
+
+    eventBus.on('image:error', ({ error: err }) => {
+      isLoading.value = false;
+      error.value = err;
+      emit('error', err);
+    });
+
+    eventBus.on('hotspot:click', ({ id, data }) => {
+      emit('hotspotClick', { id, data } as Hotspot);
+    });
+
+    eventBus.on('performance:stats', (stats) => {
+      performanceStats.value = stats as PerformanceStats;
+    });
 
     // Set initial minimap visibility
     if (!props.showMiniMap && viewerInstance.value) {
@@ -88,16 +149,18 @@ onMounted(() => {
     }
 
     emit('ready');
-  } catch (error) {
-    emit('error', error as Error);
+  } catch (err) {
+    error.value = err as Error;
+    emit('error', err as Error);
   }
 });
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
   if (viewerInstance.value) {
     viewerInstance.value.dispose();
     viewerInstance.value = null;
   }
+  eventBus.dispose();
 });
 
 // Watch for image changes
@@ -272,7 +335,8 @@ const toggleMiniMap = (): void => {
   }
 };
 
-defineExpose({
+// 暴露的方法对象
+const exposedMethods = {
   loadImage,
   reset,
   enableAutoRotate,
@@ -292,12 +356,60 @@ defineExpose({
   showMiniMap,
   hideMiniMap,
   toggleMiniMap,
-});
+  getViewer: () => viewerInstance.value,
+  getEventBus: () => eventBus,
+};
+
+defineExpose(exposedMethods);
 </script>
 
 <style scoped>
 .panorama-viewer {
   position: relative;
   overflow: hidden;
+}
+
+.default-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 1000;
+  color: white;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 20px 30px;
+  border-radius: 8px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 10px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.default-error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(244, 67, 54, 0.9);
+  color: white;
+  padding: 20px;
+  border-radius: 8px;
+  z-index: 1000;
 }
 </style>

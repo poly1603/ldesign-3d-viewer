@@ -174,5 +174,167 @@ export class QuaternionPool {
   public release(q: THREE.Quaternion): void {
     this.pool.release(q);
   }
+
+  public getStats() {
+    return this.pool.getStats();
+  }
+}
+
+/**
+ * Matrix4 object pool for Three.js
+ */
+export class Matrix4Pool {
+  private static instance: Matrix4Pool;
+  private pool: ObjectPool<THREE.Matrix4>;
+
+  private constructor() {
+    this.pool = new ObjectPool(
+      () => new THREE.Matrix4(),
+      (m) => m.identity(),
+      50
+    );
+  }
+
+  public static getInstance(): Matrix4Pool {
+    if (!Matrix4Pool.instance) {
+      Matrix4Pool.instance = new Matrix4Pool();
+    }
+    return Matrix4Pool.instance;
+  }
+
+  public acquire(): THREE.Matrix4 {
+    return this.pool.acquire();
+  }
+
+  public release(m: THREE.Matrix4): void {
+    this.pool.release(m);
+  }
+
+  public getStats() {
+    return this.pool.getStats();
+  }
+}
+
+/**
+ * Vector2 object pool for Three.js
+ */
+export class Vector2Pool {
+  private static instance: Vector2Pool;
+  private pool: ObjectPool<THREE.Vector2>;
+
+  private constructor() {
+    this.pool = new ObjectPool(
+      () => new THREE.Vector2(),
+      (v) => v.set(0, 0),
+      150
+    );
+  }
+
+  public static getInstance(): Vector2Pool {
+    if (!Vector2Pool.instance) {
+      Vector2Pool.instance = new Vector2Pool();
+    }
+    return Vector2Pool.instance;
+  }
+
+  public acquire(): THREE.Vector2 {
+    return this.pool.acquire();
+  }
+
+  public release(v: THREE.Vector2): void {
+    this.pool.release(v);
+  }
+
+  public getStats() {
+    return this.pool.getStats();
+  }
+}
+
+/**
+ * Color object pool for Three.js
+ */
+export class ColorPool {
+  private static instance: ColorPool;
+  private pool: ObjectPool<THREE.Color>;
+
+  private constructor() {
+    this.pool = new ObjectPool(
+      () => new THREE.Color(),
+      (c) => c.setRGB(1, 1, 1),
+      50
+    );
+  }
+
+  public static getInstance(): ColorPool {
+    if (!ColorPool.instance) {
+      ColorPool.instance = new ColorPool();
+    }
+    return ColorPool.instance;
+  }
+
+  public acquire(): THREE.Color {
+    return this.pool.acquire();
+  }
+
+  public release(c: THREE.Color): void {
+    this.pool.release(c);
+  }
+
+  public getStats() {
+    return this.pool.getStats();
+  }
+}
+
+/**
+ * Raycaster object pool for Three.js
+ */
+export class RaycasterPool {
+  private static instance: RaycasterPool;
+  private pool: ObjectPool<THREE.Raycaster>;
+
+  private constructor() {
+    this.pool = new ObjectPool(
+      () => new THREE.Raycaster(),
+      (r) => {
+        r.far = Infinity;
+        r.near = 0;
+      },
+      20
+    );
+  }
+
+  public static getInstance(): RaycasterPool {
+    if (!RaycasterPool.instance) {
+      RaycasterPool.instance = new RaycasterPool();
+    }
+    return RaycasterPool.instance;
+  }
+
+  public acquire(): THREE.Raycaster {
+    return this.pool.acquire();
+  }
+
+  public release(r: THREE.Raycaster): void {
+    this.pool.release(r);
+  }
+
+  public getStats() {
+    return this.pool.getStats();
+  }
+}
+
+/**
+ * 获取所有对象池的统计信息
+ */
+export function getAllPoolStats() {
+  return {
+    Vector3: Vector3Pool.getInstance().getStats(),
+    Vector2: Vector2Pool.getInstance().getStats(),
+    Euler: EulerPool.getInstance().getStats(),
+    Quaternion: QuaternionPool.getInstance().getStats(),
+    Matrix4: Matrix4Pool.getInstance().getStats(),
+    Color: ColorPool.getInstance().getStats(),
+    Raycaster: RaycasterPool.getInstance().getStats(),
+  };
 }
 

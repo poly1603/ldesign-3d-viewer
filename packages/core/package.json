@@ -1,7 +1,7 @@
 {
   "name": "@panorama-viewer/core",
-  "version": "1.0.0",
-  "description": "Core panorama viewer using Three.js",
+  "version": "2.0.0",
+  "description": "Enterprise-grade 360° panorama viewer with video, audio, VR/AR support",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
@@ -24,7 +24,16 @@
     "panorama",
     "3d",
     "threejs",
-    "viewer"
+    "viewer",
+    "360",
+    "video",
+    "vr",
+    "ar",
+    "webxr",
+    "spatial-audio",
+    "hdr",
+    "post-processing",
+    "virtual-tour"
   ],
   "author": "",
   "license": "MIT",

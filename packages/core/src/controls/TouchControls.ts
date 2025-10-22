@@ -36,10 +36,19 @@ export class TouchControls {
     this.bindEvents();
   }
 
+  // 绑定的事件处理器引用，用于正确移除
+  private boundTouchStart: (e: TouchEvent) => void;
+  private boundTouchMove: (e: TouchEvent) => void;
+  private boundTouchEnd: (e: TouchEvent) => void;
+
   private bindEvents(): void {
-    this.domElement.addEventListener('touchstart', this.onTouchStart.bind(this), { passive: false });
-    this.domElement.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: false });
-    this.domElement.addEventListener('touchend', this.onTouchEnd.bind(this), { passive: false });
+    this.boundTouchStart = this.onTouchStart.bind(this);
+    this.boundTouchMove = this.onTouchMove.bind(this);
+    this.boundTouchEnd = this.onTouchEnd.bind(this);
+
+    this.domElement.addEventListener('touchstart', this.boundTouchStart, { passive: false });
+    this.domElement.addEventListener('touchmove', this.boundTouchMove, { passive: false });
+    this.domElement.addEventListener('touchend', this.boundTouchEnd, { passive: false });
   }
 
   private onTouchStart(event: TouchEvent): void {
@@ -136,9 +145,16 @@ export class TouchControls {
   }
 
   public dispose(): void {
-    this.domElement.removeEventListener('touchstart', this.onTouchStart.bind(this));
-    this.domElement.removeEventListener('touchmove', this.onTouchMove.bind(this));
-    this.domElement.removeEventListener('touchend', this.onTouchEnd.bind(this));
+    if (this.boundTouchStart) {
+      this.domElement.removeEventListener('touchstart', this.boundTouchStart);
+    }
+    if (this.boundTouchMove) {
+      this.domElement.removeEventListener('touchmove', this.boundTouchMove);
+    }
+    if (this.boundTouchEnd) {
+      this.domElement.removeEventListener('touchend', this.boundTouchEnd);
+    }
+    this.enabled = false;
   }
 }
 

@@ -1,6 +1,22 @@
-import React, { useRef, useEffect, useImperativeHandle, forwardRef, CSSProperties } from 'react';
-import { PanoramaViewer as CoreViewer } from '@panorama-viewer/core';
-import type { ViewerOptions, Hotspot, ViewLimits, CubemapImages } from '@panorama-viewer/core';
+import React, {
+  useRef,
+  useEffect,
+  useImperativeHandle,
+  forwardRef,
+  CSSProperties,
+  useState,
+  useMemo,
+  Suspense,
+} from 'react';
+import {
+  PanoramaViewer as CoreViewer,
+  EventBus,
+  type ViewerOptions,
+  type Hotspot,
+  type ViewLimits,
+  type CubemapImages,
+  type PerformanceStats,
+} from '@panorama-viewer/core';
 
 export interface PanoramaViewerProps {
   image: string | CubemapImages;

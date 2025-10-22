@@ -1,0 +1,20 @@
+{
+  "name": "panorama-viewer-advanced-example",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@panorama-viewer/core": "workspace:*",
+    "three": "^0.160.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "typescript": "^5.3.3"
+  }
+}
+
