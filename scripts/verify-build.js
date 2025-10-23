@@ -15,7 +15,7 @@ const results = [];
 
 packages.forEach(pkg => {
   console.log(`📦 验证 @panorama-viewer/${pkg}`);
-  
+
   const distPath = path.join(__dirname, '../packages', pkg, 'dist');
   const result = {
     package: pkg,
@@ -23,7 +23,7 @@ packages.forEach(pkg => {
     files: {},
     totalSize: 0,
   };
-  
+
   // 检查目录是否存在
   if (!fs.existsSync(distPath)) {
     console.log(`  ❌ dist 目录不存在`);
@@ -31,21 +31,21 @@ packages.forEach(pkg => {
     results.push(result);
     return;
   }
-  
+
   result.distExists = true;
-  
+
   // 检查文件
   const requiredFiles = {
     esm: 'index.esm.js',
     cjs: 'index.cjs.js',
     dts: 'index.d.ts',
   };
-  
+
   // Vue 特殊：有 CSS 文件
   if (pkg === 'vue') {
     requiredFiles.css = 'style.css';
   }
-  
+
   Object.entries(requiredFiles).forEach(([type, file]) => {
     const filePath = path.join(distPath, file);
     if (fs.existsSync(filePath)) {
@@ -64,7 +64,7 @@ packages.forEach(pkg => {
       allPassed = false;
     }
   });
-  
+
   console.log(`  📊 总大小: ${(result.totalSize / 1024).toFixed(2)} KB\n`);
   results.push(result);
 });
