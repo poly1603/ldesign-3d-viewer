@@ -3,6 +3,15 @@ import { customElement, state } from 'lit/decorators.js';
 import '@panorama-viewer/lit';
 import type { PanoramaViewerElement } from '@panorama-viewer/lit';
 import type { Hotspot, ViewLimits } from '@panorama-viewer/core';
+import {
+  deviceCapability,
+  powerManager,
+  formatDetector,
+  SceneManager,
+  AnnotationManager,
+  ColorGrading,
+  themeManager,
+} from '@panorama-viewer/core';
 
 const images = [
   'https://threejs.org/examples/textures/2294472375_24a3b8ef46_o.jpg',
@@ -173,6 +182,39 @@ export class AppComponent extends LitElement {
 
   private hotspotCounter = 0;
 
+  @state()
+  private deviceInfo = '';
+
+  @state()
+  private performanceMode = '';
+
+  @state()
+  private supportedFormats = '';
+
+  override connectedCallback() {
+    super.connectedCallback();
+
+    // 初始化新功能
+    this.deviceInfo = deviceCapability.generateReport();
+
+    const support = formatDetector.getSupport();
+    this.supportedFormats = `WebP: ${support.webp ? '✅' : '❌'}, AVIF: ${support.avif ? '✅' : '❌'}`;
+
+    powerManager.startMonitoring();
+    powerManager.onChange((mode) => {
+      this.performanceMode = `${mode.mode} (目标${mode.targetFPS}fps)`;
+    });
+
+    themeManager.applyTheme('light');
+
+    console.log('✨ 新功能已初始化');
+  }
+
+  override disconnectedCallback() {
+    super.disconnectedCallback();
+    powerManager.stopMonitoring();
+  }
+
   private get viewerElement(): PanoramaViewerElement | null {
     return this.shadowRoot?.querySelector('panorama-viewer') as PanoramaViewerElement | null;
   }
@@ -229,7 +271,7 @@ export class AppComponent extends LitElement {
       label: `📍 #${this.hotspotCounter}`,
       data: { name: `Point of Interest ${this.hotspotCounter}` },
     };
-    
+
     this.viewerElement?.addHotspot(newHotspot);
     this.hotspots = this.viewerElement?.getHotspots() || [];
   }
@@ -377,7 +419,7 @@ export class AppComponent extends LitElement {
           ` : ''}
 
           <div class="info-row">
-            <strong>New Features:</strong>
+            <strong>New Features (v2.1):</strong>
             <ul>
               <li>✅ Keyboard controls with arrow keys</li>
               <li>✅ Mini-map with compass orientation</li>
@@ -388,7 +430,30 @@ export class AppComponent extends LitElement {
               <li>✅ Smooth image transitions</li>
               <li>✅ Loading progress indicator</li>
               <li>✅ Performance optimizations</li>
+              <li>🆕 Smart device adaptation</li>
+              <li>🆕 Automatic format detection (WebP/AVIF)</li>
+              <li>🆕 Power management (battery aware)</li>
+              <li>🆕 CDN failover</li>
+              <li>🆕 Scene management</li>
+              <li>🆕 Annotation system</li>
+              <li>🆕 Color grading presets</li>
+              <li>🆕 Particle effects</li>
             </ul>
+          </div>
+
+          <div class="info-row">
+            <strong>Device Info:</strong>
+            <div style="font-size: 0.85rem; white-space: pre-line; opacity: 0.8; max-height: 200px; overflow-y: auto;">
+              ${this.deviceInfo}
+            </div>
+          </div>
+
+          <div class="info-row">
+            <strong>Performance:</strong>
+            <div style="font-size: 0.85rem;">
+              <div>电源模式: ${this.performanceMode || '检测中...'}</div>
+              <div>支持格式: ${this.supportedFormats}</div>
+            </div>
           </div>
         </div>
       </div>

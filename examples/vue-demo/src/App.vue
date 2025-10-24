@@ -82,7 +82,7 @@
       </div>
 
       <div class="info-row">
-        <strong>New Features:</strong>
+        <strong>New Features (v2.1):</strong>
         <ul>
           <li>✅ Keyboard controls with arrow keys</li>
           <li>✅ Mini-map with compass orientation</li>
@@ -93,16 +93,48 @@
           <li>✅ Smooth image transitions</li>
           <li>✅ Loading progress indicator</li>
           <li>✅ Performance optimizations</li>
+          <li>🆕 Smart device adaptation</li>
+          <li>🆕 Automatic format detection (WebP/AVIF)</li>
+          <li>🆕 Power management (battery aware)</li>
+          <li>🆕 CDN failover</li>
+          <li>🆕 Scene management</li>
+          <li>🆕 Annotation system</li>
+          <li>🆕 Color grading presets</li>
+          <li>🆕 Particle effects</li>
         </ul>
+      </div>
+      
+      <div class="info-row">
+        <strong>Device Info:</strong>
+        <div style="font-size: 0.85rem; white-space: pre-line; opacity: 0.8; max-height: 200px; overflow-y: auto;">
+          {{ deviceInfo }}
+        </div>
+      </div>
+      
+      <div class="info-row">
+        <strong>Performance:</strong>
+        <div style="font-size: 0.85rem;">
+          <div>电源模式: {{ performanceMode || '检测中...' }}</div>
+          <div>支持格式: {{ supportedFormats }}</div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { PanoramaViewer } from '@panorama-viewer/vue';
 import type { Hotspot, ViewLimits } from '@panorama-viewer/core';
+import {
+  deviceCapability,
+  powerManager,
+  formatDetector,
+  SceneManager,
+  AnnotationManager,
+  ColorGrading,
+  themeManager,
+} from '@panorama-viewer/core';
 
 const viewer = ref();
 const autoRotate = ref(false);
@@ -120,6 +152,37 @@ const images = [
 
 const currentImage = ref(images[0]);
 let hotspotCounter = 0;
+
+// 新增：设备信息和性能
+const deviceInfo = ref('');
+const performanceMode = ref('');
+const supportedFormats = ref('');
+
+// 初始化新功能
+onMounted(() => {
+  // 获取设备信息
+  deviceInfo.value = deviceCapability.generateReport();
+  
+  // 获取支持的格式
+  const support = formatDetector.getSupport();
+  supportedFormats.value = `WebP: ${support.webp ? '✅' : '❌'}, AVIF: ${support.avif ? '✅' : '❌'}`;
+  
+  // 启动电源监控
+  powerManager.startMonitoring();
+  powerManager.onChange((mode) => {
+    performanceMode.value = `${mode.mode} (目标${mode.targetFPS}fps)`;
+  });
+  
+  // 应用明亮主题
+  themeManager.applyTheme('light');
+  
+  console.log('✨ 新功能已初始化');
+  console.log(deviceInfo.value);
+});
+
+onUnmounted(() => {
+  powerManager.stopMonitoring();
+});
 
 const toggleAutoRotate = () => {
   autoRotate.value = !autoRotate.value;

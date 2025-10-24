@@ -1,6 +1,15 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { PanoramaViewer, PanoramaViewerRef } from '@panorama-viewer/react';
 import type { Hotspot, ViewLimits } from '@panorama-viewer/core';
+import {
+  deviceCapability,
+  powerManager,
+  formatDetector,
+  SceneManager,
+  AnnotationManager,
+  ColorGrading,
+  themeManager,
+} from '@panorama-viewer/core';
 import './App.css';
 
 const images = [
@@ -19,6 +28,37 @@ function App() {
   const [lastHotspotClick, setLastHotspotClick] = useState<Hotspot | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [hotspotCounter, setHotspotCounter] = useState(0);
+
+  // 新增：设备信息和性能
+  const [deviceInfo, setDeviceInfo] = useState('');
+  const [performanceMode, setPerformanceMode] = useState('');
+  const [supportedFormats, setSupportedFormats] = useState('');
+
+  // 初始化新功能
+  useEffect(() => {
+    // 获取设备信息
+    setDeviceInfo(deviceCapability.generateReport());
+
+    // 获取支持的格式
+    const support = formatDetector.getSupport();
+    setSupportedFormats(`WebP: ${support.webp ? '✅' : '❌'}, AVIF: ${support.avif ? '✅' : '❌'}`);
+
+    // 启动电源监控
+    powerManager.startMonitoring();
+    const unsubscribe = powerManager.onChange((mode) => {
+      setPerformanceMode(`${mode.mode} (目标${mode.targetFPS}fps)`);
+    });
+
+    // 应用主题
+    themeManager.applyTheme('light');
+
+    console.log('✨ 新功能已初始化');
+
+    return () => {
+      powerManager.stopMonitoring();
+      unsubscribe();
+    };
+  }, []);
 
   const toggleAutoRotate = () => {
     setAutoRotate(!autoRotate);
@@ -72,7 +112,7 @@ function App() {
       label: `📍 #${hotspotCounter + 1}`,
       data: { name: `Point of Interest ${hotspotCounter + 1}` },
     };
-    
+
     viewerRef.current?.addHotspot(newHotspot);
     const allHotspots = viewerRef.current?.getHotspots() || [];
     setHotspots(allHotspots);
@@ -139,7 +179,7 @@ function App() {
   return (
     <div className="app">
       <h1>React Panorama Viewer Demo - Enhanced</h1>
-      
+
       <div className="controls-grid">
         <div className="control-section">
           <h3>Basic Controls</h3>
@@ -216,7 +256,7 @@ function App() {
             <li><strong>Mobile:</strong> Device orientation (with permission)</li>
           </ul>
         </div>
-        
+
         {lastHotspotClick && (
           <div className="info-row">
             <strong>Last Hotspot Clicked:</strong> {lastHotspotClick.label}
@@ -224,7 +264,7 @@ function App() {
         )}
 
         <div className="info-row">
-          <strong>New Features:</strong>
+          <strong>New Features (v2.1):</strong>
           <ul>
             <li>✅ Keyboard controls with arrow keys</li>
             <li>✅ Mini-map with compass orientation</li>
@@ -235,7 +275,30 @@ function App() {
             <li>✅ Smooth image transitions</li>
             <li>✅ Loading progress indicator</li>
             <li>✅ Performance optimizations</li>
+            <li>🆕 Smart device adaptation</li>
+            <li>🆕 Automatic format detection (WebP/AVIF)</li>
+            <li>🆕 Power management (battery aware)</li>
+            <li>🆕 CDN failover</li>
+            <li>🆕 Scene management</li>
+            <li>🆕 Annotation system</li>
+            <li>🆕 Color grading presets</li>
+            <li>🆕 Particle effects</li>
           </ul>
+        </div>
+
+        <div className="info-row">
+          <strong>Device Info:</strong>
+          <div style={{ fontSize: '0.85rem', whiteSpace: 'pre-line', opacity: 0.8, maxHeight: '200px', overflowY: 'auto' }}>
+            {deviceInfo}
+          </div>
+        </div>
+
+        <div className="info-row">
+          <strong>Performance:</strong>
+          <div style={{ fontSize: '0.85rem' }}>
+            <div>电源模式: {performanceMode || '检测中...'}</div>
+            <div>支持格式: {supportedFormats}</div>
+          </div>
         </div>
       </div>
     </div>
