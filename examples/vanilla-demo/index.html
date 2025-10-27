@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Panorama Viewer - Vanilla JS Demo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 2rem;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .info-banner {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .control-section {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 15px;
+      border-radius: 8px;
+      backdrop-filter: blur(10px);
+    }
+
+    .control-section h3 {
+      margin: 0 0 10px 0;
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.8);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px 15px;
+      margin-bottom: 8px;
+      font-size: 13px;
+      border: none;
+      border-radius: 4px;
+      background-color: #42b883;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 600;
+    }
+
+    button:last-child {
+      margin-bottom: 0;
+    }
+
+    button:hover {
+      background-color: #35a372;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .info-text {
+      display: block;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.85rem;
+      margin-top: 5px;
+    }
+
+    #viewer-container {
+      width: 100%;
+      height: 600px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      margin-bottom: 20px;
+    }
+
+    .progress-container {
+      margin-bottom: 20px;
+      text-align: center;
+      display: none;
+    }
+
+    .progress-container.active {
+      display: block;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 5px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #42b883, #35a372);
+      transition: width 0.3s;
+      width: 0%;
+    }
+
+    .progress-text {
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .info-panel {
+      margin-top: 20px;
+      padding: 20px;
+      background-color: rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      backdrop-filter: blur(10px);
+    }
+
+    .info-row {
+      margin-bottom: 15px;
+    }
+
+    .info-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .info-row strong {
+      display: block;
+      margin-bottom: 8px;
+      color: #42b883;
+    }
+
+    .info-row ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .info-row li {
+      margin-bottom: 5px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🌐 3D Panorama Viewer - 原生JS演示</h1>
+    
+    <div class="info-banner">
+      <strong>✨ 纯HTML + JavaScript，无需构建工具</strong>
+      <p style="margin-top: 8px; font-size: 0.9rem; opacity: 0.9;">
+        使用UMD构建，可通过CDN或本地文件直接引入
+      </p>
+    </div>
+
+    <div class="controls-grid">
+      <div class="control-section">
+        <h3>基础控制</h3>
+        <button onclick="toggleAutoRotate()">
+          <span id="rotate-btn-text">▶️ 开始</span> 自动旋转
+        </button>
+        <button onclick="resetView()">🔄 重置视角</button>
+        <button onclick="enableGyro()">📱 启用陀螺仪</button>
+      </div>
+
+      <div class="control-section">
+        <h3>高级功能</h3>
+        <button onclick="toggleFullscreen()">
+          <span id="fullscreen-btn-text">⛶ 进入</span> 全屏
+        </button>
+        <button onclick="toggleMiniMap()">
+          <span id="minimap-btn-text">🗺️ 隐藏</span> 小地图
+        </button>
+        <button onclick="takeScreenshot()">📷 截图</button>
+      </div>
+
+      <div class="control-section">
+        <h3>热点标记</h3>
+        <button onclick="addDemoHotspot()">📍 添加热点</button>
+        <button onclick="removeAllHotspots()">🗑️ 清空热点</button>
+        <span class="info-text"><span id="hotspot-count">0</span> 个热点</span>
+      </div>
+
+      <div class="control-section">
+        <h3>视角限制</h3>
+        <button onclick="setHorizontalLimit()">↔️ 水平限制</button>
+        <button onclick="setVerticalLimit()">↕️ 垂直限制</button>
+        <button onclick="clearLimits()">🔓 清除限制</button>
+      </div>
+
+      <div class="control-section">
+        <h3>切换图片</h3>
+        <button onclick="changeImage(0)">🏔️ 山景</button>
+        <button onclick="changeImage(1)">🌃 夜景</button>
+      </div>
+    </div>
+
+    <div class="progress-container" id="progress-container">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <span class="progress-text">加载中: <span id="progress-text">0</span>%</span>
+    </div>
+
+    <div id="viewer-container"></div>
+
+    <div class="info-panel">
+      <div class="info-row">
+        <strong>控制方式:</strong>
+        <ul>
+          <li><strong>鼠标:</strong> 拖拽旋转视角，滚轮缩放</li>
+          <li><strong>键盘:</strong> 方向键旋转，+/- 键缩放</li>
+          <li><strong>触屏:</strong> 单指拖拽旋转，双指缩放</li>
+          <li><strong>移动端:</strong> 设备方向感应（需授权）</li>
+        </ul>
+      </div>
+      
+      <div class="info-row">
+        <strong>最后点击的热点:</strong>
+        <div id="last-hotspot" style="font-size: 0.9rem; opacity: 0.8;">暂无</div>
+      </div>
+
+      <div class="info-row">
+        <strong>特性 (v2.1):</strong>
+        <ul>
+          <li>✅ 键盘控制</li>
+          <li>✅ 小地图与指南针</li>
+          <li>✅ 交互式热点标记</li>
+          <li>✅ 全屏模式</li>
+          <li>✅ 截图功能</li>
+          <li>✅ 视角限制</li>
+          <li>✅ 平滑过渡效果</li>
+          <li>✅ 加载进度显示</li>
+          <li>✅ 性能优化</li>
+          <li>🆕 智能设备适配</li>
+          <li>🆕 格式自动检测 (WebP/AVIF)</li>
+          <li>🆕 电源管理</li>
+          <li>🆕 CDN容错</li>
+        </ul>
+      </div>
+
+      <div class="info-row">
+        <strong>设备信息:</strong>
+        <div id="device-info" style="font-size: 0.85rem; white-space: pre-line; opacity: 0.8; max-height: 200px; overflow-y: auto;">
+          正在检测...
+        </div>
+      </div>
+
+      <div class="info-row">
+        <strong>性能:</strong>
+        <div style="font-size: 0.85rem;">
+          <div>电源模式: <span id="power-mode">检测中...</span></div>
+          <div>支持格式: <span id="supported-formats">检测中...</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Three.js from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  
+  <!-- Panorama Viewer (use local build or CDN) -->
+  <!-- For development: use local build -->
+  <script src="../../packages/core/dist/panorama-viewer.js"></script>
+  
+  <!-- For production: uncomment this line and comment out the local build -->
+  <!-- <script src="https://cdn.jsdelivr.net/npm/@panorama-viewer/core@2.0.0/dist/panorama-viewer.min.js"></script> -->
+
+  <script>
+    // Global state
+    let viewer = null;
+    let autoRotate = false;
+    let showMiniMap = true;
+    let isFullscreen = false;
+    let hotspotCounter = 0;
+    let hotspots = [];
+
+    const images = [
+      'https://threejs.org/examples/textures/2294472375_24a3b8ef46_o.jpg',
+      'https://threejs.org/examples/textures/2294472375_24a3b8ef46_o.jpg',
+    ];
+
+    let currentImageIndex = 0;
+
+    // Initialize viewer on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      initViewer();
+      initDeviceInfo();
+    });
+
+    function initViewer() {
+      const container = document.getElementById('viewer-container');
+      
+      // Get device capability and recommended settings
+      const { deviceCapability } = PanoramaViewer;
+      const settings = deviceCapability ? deviceCapability.getRecommendedSettings() : {};
+      
+      viewer = new PanoramaViewer.PanoramaViewer({
+        container: container,
+        image: images[currentImageIndex],
+        fov: 75,
+        autoRotate: false,
+        gyroscope: true,
+        onProgress: (progress) => {
+          updateProgress(progress);
+        },
+        ...settings,
+      });
+
+      console.log('✅ Viewer initialized!');
+      console.log('📦 Available exports:', Object.keys(PanoramaViewer));
+    }
+
+    function initDeviceInfo() {
+      // Get device capability info
+      if (PanoramaViewer.deviceCapability) {
+        const report = PanoramaViewer.deviceCapability.generateReport();
+        document.getElementById('device-info').textContent = report;
+      }
+
+      // Get supported formats
+      if (PanoramaViewer.formatDetector) {
+        const support = PanoramaViewer.formatDetector.getSupport();
+        document.getElementById('supported-formats').textContent = 
+          `WebP: ${support.webp ? '✅' : '❌'}, AVIF: ${support.avif ? '✅' : '❌'}`;
+      }
+
+      // Start power monitoring
+      if (PanoramaViewer.powerManager) {
+        PanoramaViewer.powerManager.startMonitoring();
+        PanoramaViewer.powerManager.onChange((mode) => {
+          document.getElementById('power-mode').textContent = 
+            `${mode.mode} (目标${mode.targetFPS}fps)`;
+        });
+      }
+    }
+
+    function updateProgress(progress) {
+      const container = document.getElementById('progress-container');
+      const fill = document.getElementById('progress-fill');
+      const text = document.getElementById('progress-text');
+      
+      if (progress > 0 && progress < 100) {
+        container.classList.add('active');
+        fill.style.width = progress + '%';
+        text.textContent = Math.round(progress);
+      } else {
+        setTimeout(() => {
+          container.classList.remove('active');
+        }, 500);
+      }
+    }
+
+    function toggleAutoRotate() {
+      autoRotate = !autoRotate;
+      const btnText = document.getElementById('rotate-btn-text');
+      
+      if (autoRotate) {
+        viewer.enableAutoRotate();
+        btnText.textContent = '⏸️ 停止';
+      } else {
+        viewer.disableAutoRotate();
+        btnText.textContent = '▶️ 开始';
+      }
+    }
+
+    function resetView() {
+      viewer.reset();
+    }
+
+    async function enableGyro() {
+      const success = await viewer.enableGyroscope();
+      if (success) {
+        alert('✅ 陀螺仪已启用！');
+      } else {
+        alert('❌ 陀螺仪不可用或权限被拒绝');
+      }
+    }
+
+    async function toggleFullscreen() {
+      const btnText = document.getElementById('fullscreen-btn-text');
+      
+      if (isFullscreen) {
+        viewer.exitFullscreen();
+        isFullscreen = false;
+        btnText.textContent = '⛶ 进入';
+      } else {
+        await viewer.enterFullscreen();
+        isFullscreen = true;
+        btnText.textContent = '⬜ 退出';
+      }
+    }
+
+    function toggleMiniMap() {
+      showMiniMap = !showMiniMap;
+      const btnText = document.getElementById('minimap-btn-text');
+      
+      if (showMiniMap) {
+        viewer.showMiniMap();
+        btnText.textContent = '🗺️ 隐藏';
+      } else {
+        viewer.hideMiniMap();
+        btnText.textContent = '🗺️ 显示';
+      }
+    }
+
+    function takeScreenshot() {
+      const dataURL = viewer.screenshot(1920, 1080);
+      if (dataURL) {
+        const link = document.createElement('a');
+        link.download = 'panorama-screenshot.png';
+        link.href = dataURL;
+        link.click();
+        alert('📸 截图已保存并下载！');
+      }
+    }
+
+    function addDemoHotspot() {
+      hotspotCounter++;
+      const newHotspot = {
+        id: `hotspot-${hotspotCounter}`,
+        position: {
+          theta: Math.random() * Math.PI * 2,
+          phi: Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 0.5,
+        },
+        label: `📍 #${hotspotCounter}`,
+        data: { name: `兴趣点 ${hotspotCounter}` },
+      };
+      
+      viewer.addHotspot(newHotspot);
+      hotspots = viewer.getHotspots();
+      document.getElementById('hotspot-count').textContent = hotspots.length;
+      
+      // Note: In vanilla JS, hotspot click events would need to be handled through custom events
+    }
+
+    function removeAllHotspots() {
+      hotspots.forEach(h => viewer.removeHotspot(h.id));
+      hotspots = [];
+      hotspotCounter = 0;
+      document.getElementById('hotspot-count').textContent = '0';
+    }
+
+    function setHorizontalLimit() {
+      viewer.setViewLimits({
+        minTheta: -Math.PI / 4,
+        maxTheta: Math.PI / 4,
+      });
+      alert('↔️ 水平旋转已限制在 ±45°');
+    }
+
+    function setVerticalLimit() {
+      viewer.setViewLimits({
+        minPhi: Math.PI / 3,
+        maxPhi: (2 * Math.PI) / 3,
+      });
+      alert('↕️ 垂直旋转已限制');
+    }
+
+    function clearLimits() {
+      viewer.setViewLimits(null);
+      alert('🔓 所有旋转限制已清除');
+    }
+
+    async function changeImage(index) {
+      currentImageIndex = index;
+      updateProgress(0);
+      await viewer.loadImage(images[index], true);
+    }
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      if (viewer) {
+        viewer.dispose();
+      }
+      if (PanoramaViewer.powerManager) {
+        PanoramaViewer.powerManager.stopMonitoring();
+      }
+    });
+  </script>
+</body>
+</html>
+
