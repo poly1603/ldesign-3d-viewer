@@ -1,19 +1,33 @@
 {
   "name": "3d-panorama-viewer-monorepo",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "A cross-framework 3D panorama image viewer library",
+  "description": "A cross-framework 3D panorama image viewer library - Supporting 7+ frameworks",
   "scripts": {
-    "build": "pnpm -r --filter './packages/*' run build",
+    "build": "pnpm build:core && pnpm -r --filter './packages/*' --filter '!@panorama-viewer/core' run build",
     "build:core": "pnpm --filter @panorama-viewer/core build",
-    "build:vue": "pnpm --filter @panorama-viewer/vue build",
-    "build:react": "pnpm --filter @panorama-viewer/react build",
-    "build:lit": "pnpm --filter @panorama-viewer/lit build",
+    "build:vue": "pnpm --filter @ldesign/3d-viewer-vue build",
+    "build:react": "pnpm --filter @ldesign/3d-viewer-react build",
+    "build:angular": "pnpm --filter @ldesign/3d-viewer-angular build",
+    "build:solid": "pnpm --filter @ldesign/3d-viewer-solid build",
+    "build:svelte": "pnpm --filter @ldesign/3d-viewer-svelte build",
+    "build:qwik": "pnpm --filter @ldesign/3d-viewer-qwik build",
+    "build:lit": "pnpm --filter @ldesign/3d-viewer-lit build",
     "dev": "pnpm -r --parallel run dev",
+    "dev:core": "pnpm --filter @panorama-viewer/core dev",
     "dev:vue": "pnpm --filter vue-demo dev",
     "dev:react": "pnpm --filter react-demo dev",
     "dev:lit": "pnpm --filter lit-demo dev",
-    "clean": "pnpm -r run clean"
+    "test": "pnpm -r run test",
+    "test:unit": "pnpm -r run test:unit",
+    "test:e2e": "pnpm -r run test:e2e",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "pnpm -r run typecheck",
+    "clean": "pnpm -r run clean",
+    "clean:all": "pnpm clean && rimraf node_modules pnpm-lock.yaml",
+    "docs:dev": "pnpm --filter docs dev",
+    "docs:build": "pnpm --filter docs build"
   },
   "keywords": [
     "panorama",
@@ -22,13 +36,24 @@
     "threejs",
     "vue",
     "react",
-    "lit"
+    "angular",
+    "solid",
+    "svelte",
+    "qwik",
+    "lit",
+    "webgl",
+    "vr",
+    "ar"
   ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@antfu/eslint-config": "^2.6.0",
     "@types/node": "^20.10.0",
-    "typescript": "^5.3.3"
+    "eslint": "^8.56.0",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.3.3",
+    "vitest": "^1.1.0"
   }
 }
 

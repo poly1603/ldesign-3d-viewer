@@ -1,3 +1,1 @@
-export { PanoramaViewerElement } from './panorama-viewer';
-
-
+export { PanoramaViewerElement } from './panorama-viewer'

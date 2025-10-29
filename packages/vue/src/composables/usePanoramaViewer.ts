@@ -3,120 +3,122 @@
  * 用于在 Vue 3 中使用 PanoramaViewer
  */
 
-import { ref, onMounted, onBeforeUnmount, Ref } from 'vue';
+import type { Ref } from 'vue'
+import { onBeforeUnmount, ref } from 'vue'
 import {
-  PanoramaViewer,
   EventBus,
-  type ViewerOptions,
   type Hotspot,
-  type PerformanceStats
-} from '@panorama-viewer/core';
+  PanoramaViewer,
+  type PerformanceStats,
+  type ViewerOptions,
+} from '@panorama-viewer/core'
 
 export interface UsePanoramaViewerOptions extends Omit<ViewerOptions, 'container'> {
   /** 自动初始化（默认 true） */
-  autoInit?: boolean;
+  autoInit?: boolean
 }
 
 export interface UsePanoramaViewerReturn {
   /** Viewer 实例 */
-  viewer: Ref<PanoramaViewer | null>;
+  viewer: Ref<PanoramaViewer | null>
   /** 事件总线 */
-  eventBus: EventBus;
+  eventBus: EventBus
   /** 是否正在加载 */
-  isLoading: Ref<boolean>;
+  isLoading: Ref<boolean>
   /** 加载进度 (0-100) */
-  loadingProgress: Ref<number>;
+  loadingProgress: Ref<number>
   /** 错误信息 */
-  error: Ref<Error | null>;
+  error: Ref<Error | null>
   /** 性能统计 */
-  performanceStats: Ref<PerformanceStats | null>;
+  performanceStats: Ref<PerformanceStats | null>
   /** 是否就绪 */
-  isReady: Ref<boolean>;
+  isReady: Ref<boolean>
   /** 初始化 Viewer */
-  init: (container: HTMLElement) => Promise<void>;
+  init: (container: HTMLElement) => Promise<void>
   /** 销毁 Viewer */
-  destroy: () => void;
+  destroy: () => void
 }
 
 /**
  * 使用 PanoramaViewer 的 Composition API
  */
 export function usePanoramaViewer(
-  options: UsePanoramaViewerOptions
+  options: UsePanoramaViewerOptions,
 ): UsePanoramaViewerReturn {
-  const viewer = ref<PanoramaViewer | null>(null);
-  const eventBus = new EventBus();
-  const isLoading = ref(false);
-  const loadingProgress = ref(0);
-  const error = ref<Error | null>(null);
-  const performanceStats = ref<PerformanceStats | null>(null);
-  const isReady = ref(false);
+  const viewer = ref<PanoramaViewer | null>(null)
+  const eventBus = new EventBus()
+  const isLoading = ref(false)
+  const loadingProgress = ref(0)
+  const error = ref<Error | null>(null)
+  const performanceStats = ref<PerformanceStats | null>(null)
+  const isReady = ref(false)
 
   // 订阅事件
   eventBus.on('viewer:ready', () => {
-    isReady.value = true;
-  });
+    isReady.value = true
+  })
 
   eventBus.on('image:loading', ({ progress }) => {
-    isLoading.value = true;
-    loadingProgress.value = progress;
-  });
+    isLoading.value = true
+    loadingProgress.value = progress
+  })
 
   eventBus.on('image:loaded', () => {
-    isLoading.value = false;
-    error.value = null;
-  });
+    isLoading.value = false
+    error.value = null
+  })
 
   eventBus.on('image:error', ({ error: err }) => {
-    isLoading.value = false;
-    error.value = err;
-    isReady.value = false;
-  });
+    isLoading.value = false
+    error.value = err
+    isReady.value = false
+  })
 
   eventBus.on('performance:stats', (stats) => {
-    performanceStats.value = stats as PerformanceStats;
-  });
+    performanceStats.value = stats as PerformanceStats
+  })
 
   eventBus.on('error', (err) => {
-    error.value = err;
-  });
+    error.value = err
+  })
 
   const init = async (container: HTMLElement): Promise<void> => {
     if (viewer.value) {
-      console.warn('Viewer already initialized');
-      return;
+      console.warn('Viewer already initialized')
+      return
     }
 
     try {
       const viewerOptions: ViewerOptions = {
         container,
         ...options,
-      };
+      }
 
-      viewer.value = new PanoramaViewer(viewerOptions, eventBus);
-      isReady.value = true;
-    } catch (err) {
-      error.value = err as Error;
-      throw err;
+      viewer.value = new PanoramaViewer(viewerOptions)
+      isReady.value = true
     }
-  };
+    catch (err) {
+      error.value = err as Error
+      throw err
+    }
+  }
 
   const destroy = () => {
     if (viewer.value) {
-      viewer.value.dispose();
-      viewer.value = null;
+      viewer.value.dispose()
+      viewer.value = null
     }
-    eventBus.dispose();
-    isReady.value = false;
-  };
+    eventBus.dispose()
+    isReady.value = false
+  }
 
   // 自动清理
   onBeforeUnmount(() => {
-    destroy();
-  });
+    destroy()
+  })
 
   return {
-    viewer,
+    viewer: viewer as Ref<PanoramaViewer | null>,
     eventBus,
     isLoading,
     loadingProgress,
@@ -125,75 +127,75 @@ export function usePanoramaViewer(
     isReady,
     init,
     destroy,
-  };
+  }
 }
 
 /**
  * 使用热点功能
  */
 export function useHotspots(viewer: Ref<PanoramaViewer | null>) {
-  const hotspots = ref<Hotspot[]>([]);
+  const hotspots = ref<Hotspot[]>([])
 
   const addHotspot = (hotspot: Hotspot) => {
     if (viewer.value) {
-      viewer.value.addHotspot(hotspot);
-      hotspots.value.push(hotspot);
+      viewer.value.addHotspot(hotspot)
+      hotspots.value.push(hotspot)
     }
-  };
+  }
 
   const removeHotspot = (id: string) => {
     if (viewer.value) {
-      viewer.value.removeHotspot(id);
-      hotspots.value = hotspots.value.filter(h => h.id !== id);
+      viewer.value.removeHotspot(id)
+      hotspots.value = hotspots.value.filter(h => h.id !== id)
     }
-  };
+  }
 
   const clearHotspots = () => {
-    hotspots.value.forEach(h => removeHotspot(h.id));
-    hotspots.value = [];
-  };
+    hotspots.value.forEach(h => removeHotspot(h.id))
+    hotspots.value = []
+  }
 
   return {
     hotspots,
     addHotspot,
     removeHotspot,
     clearHotspots,
-  };
+  }
 }
 
 /**
  * 使用全屏功能
  */
 export function useFullscreen(viewer: Ref<PanoramaViewer | null>) {
-  const isFullscreen = ref(false);
+  const isFullscreen = ref(false)
 
   const enterFullscreen = async () => {
     if (viewer.value) {
-      await viewer.value.enterFullscreen();
-      isFullscreen.value = true;
+      await viewer.value.enterFullscreen()
+      isFullscreen.value = true
     }
-  };
+  }
 
   const exitFullscreen = () => {
     if (viewer.value) {
-      viewer.value.exitFullscreen();
-      isFullscreen.value = false;
+      viewer.value.exitFullscreen()
+      isFullscreen.value = false
     }
-  };
+  }
 
   const toggleFullscreen = async () => {
     if (isFullscreen.value) {
-      exitFullscreen();
-    } else {
-      await enterFullscreen();
+      exitFullscreen()
     }
-  };
+    else {
+      await enterFullscreen()
+    }
+  }
 
   return {
     isFullscreen,
     enterFullscreen,
     exitFullscreen,
     toggleFullscreen,
-  };
+  }
 }
-

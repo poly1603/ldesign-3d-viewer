@@ -1,13 +1,13 @@
-import { LitElement, html, css } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
-import { PanoramaViewer as CoreViewer } from '@panorama-viewer/core';
-import type { ViewerOptions, Hotspot, ViewLimits, CubemapImages } from '@panorama-viewer/core';
+import { LitElement, css, html } from 'lit'
+import { customElement, property } from 'lit/decorators.js'
+import { PanoramaViewer as CoreViewer } from '@panorama-viewer/core'
+import type { CubemapImages, Hotspot, ViewLimits, ViewerOptions } from '@panorama-viewer/core'
 
 /**
  * Panorama Viewer Web Component
- * 
+ *
  * @element panorama-viewer
- * 
+ *
  * @attr {string} image - URL or path to the panorama image
  * @attr {string} format - Image format: 'equirectangular' or 'cubemap'
  * @attr {number} fov - Field of view in degrees (default: 75)
@@ -21,7 +21,7 @@ import type { ViewerOptions, Hotspot, ViewLimits, CubemapImages } from '@panoram
  * @attr {boolean} show-mini-map - Show mini map (default: true)
  * @attr {string} width - Container width (default: 100%)
  * @attr {string} height - Container height (default: 500px)
- * 
+ *
  * @fires ready - Fired when the viewer is initialized
  * @fires error - Fired when an error occurs
  * @fires progress - Fired during image loading
@@ -40,70 +40,71 @@ export class PanoramaViewerElement extends LitElement {
       height: 100%;
       overflow: hidden;
     }
-  `;
+  `
 
   @property({ type: String })
-  image = '';
+  image = ''
 
   @property({ type: String })
-  format: 'equirectangular' | 'cubemap' = 'equirectangular';
+  format: 'equirectangular' | 'cubemap' = 'equirectangular'
 
   @property({ type: Number })
-  fov = 75;
+  fov = 75
 
   @property({ type: Number, attribute: 'min-fov' })
-  minFov = 30;
+  minFov = 30
 
   @property({ type: Number, attribute: 'max-fov' })
-  maxFov = 100;
+  maxFov = 100
 
   @property({ type: Boolean, attribute: 'auto-rotate' })
-  autoRotate = false;
+  autoRotate = false
 
   @property({ type: Number, attribute: 'auto-rotate-speed' })
-  autoRotateSpeed = 0.5;
+  autoRotateSpeed = 0.5
 
   @property({ type: Boolean })
-  gyroscope = true;
+  gyroscope = true
 
   @property({ type: Boolean, attribute: 'keyboard-controls' })
-  keyboardControls = true;
+  keyboardControls = true
 
   @property({ type: Boolean, attribute: 'render-on-demand' })
-  renderOnDemand = true;
+  renderOnDemand = true
 
   @property({ type: Boolean, attribute: 'show-mini-map' })
-  showMiniMap = true;
+  showMiniMap = true
 
   @property({ type: String })
-  width = '100%';
+  width = '100%'
 
   @property({ type: String })
-  height = '500px';
+  height = '500px'
 
   @property({ type: Object, attribute: false })
-  viewLimits: ViewLimits | null = null;
+  viewLimits: ViewLimits | undefined = undefined
 
-  private viewer: CoreViewer | null = null;
-  private containerElement: HTMLElement | null = null;
+  private viewer: CoreViewer | null = null
+  private containerElement: HTMLElement | null = null
 
   override render() {
     return html`
       <div class="container" style="width: ${this.width}; height: ${this.height}">
       </div>
-    `;
+    `
   }
 
   override firstUpdated() {
-    this.containerElement = this.shadowRoot?.querySelector('.container') as HTMLElement;
-    
+    this.containerElement = this.shadowRoot?.querySelector('.container') as HTMLElement
+
     if (this.containerElement && this.image) {
-      this.initializeViewer();
+      this.initializeViewer()
     }
   }
 
   private initializeViewer() {
-    if (!this.containerElement || !this.image) return;
+    if (!this.containerElement || !this.image)
+      return
 
     try {
       const options: ViewerOptions = {
@@ -120,31 +121,32 @@ export class PanoramaViewerElement extends LitElement {
         keyboardControls: this.keyboardControls,
         renderOnDemand: this.renderOnDemand,
         onProgress: (progress: number) => {
-          this.dispatchEvent(new CustomEvent('progress', { detail: { progress } }));
+          this.dispatchEvent(new CustomEvent('progress', { detail: { progress } }))
         },
-      };
+      }
 
-      this.viewer = new CoreViewer(options);
+      this.viewer = new CoreViewer(options)
 
       // Setup hotspot click listener
       this.containerElement.addEventListener('hotspotclick', ((e: CustomEvent) => {
         this.dispatchEvent(new CustomEvent('hotspotclick', {
           detail: { hotspot: e.detail.hotspot },
-        }));
-      }) as EventListener);
+        }))
+      }) as EventListener)
 
       // Set initial minimap visibility
       if (!this.showMiniMap && this.viewer) {
-        this.viewer.hideMiniMap();
+        this.viewer.hideMiniMap()
       }
 
-      this.dispatchEvent(new CustomEvent('ready'));
-    } catch (error) {
+      this.dispatchEvent(new CustomEvent('ready'))
+    }
+    catch (error) {
       this.dispatchEvent(
         new CustomEvent('error', {
           detail: { error },
-        })
-      );
+        }),
+      )
     }
   }
 
@@ -155,40 +157,42 @@ export class PanoramaViewerElement extends LitElement {
         this.dispatchEvent(
           new CustomEvent('error', {
             detail: { error },
-          })
-        );
-      });
+          }),
+        )
+      })
     }
 
     // Handle autoRotate changes
     if (changedProperties.has('autoRotate') && this.viewer) {
       if (this.autoRotate) {
-        this.viewer.enableAutoRotate();
-      } else {
-        this.viewer.disableAutoRotate();
+        this.viewer.enableAutoRotate()
+      }
+      else {
+        this.viewer.disableAutoRotate()
       }
     }
 
     // Handle viewLimits changes
     if (changedProperties.has('viewLimits') && this.viewer) {
-      this.viewer.setViewLimits(this.viewLimits);
+      this.viewer.setViewLimits(this.viewLimits ?? null)
     }
 
     // Handle minimap visibility
     if (changedProperties.has('showMiniMap') && this.viewer) {
       if (this.showMiniMap) {
-        this.viewer.showMiniMap();
-      } else {
-        this.viewer.hideMiniMap();
+        this.viewer.showMiniMap()
+      }
+      else {
+        this.viewer.hideMiniMap()
       }
     }
   }
 
   override disconnectedCallback() {
-    super.disconnectedCallback();
+    super.disconnectedCallback()
     if (this.viewer) {
-      this.viewer.dispose();
-      this.viewer = null;
+      this.viewer.dispose()
+      this.viewer = null
     }
   }
 
@@ -197,7 +201,7 @@ export class PanoramaViewerElement extends LitElement {
    */
   public async loadImage(url: string | CubemapImages, transition = false): Promise<void> {
     if (this.viewer) {
-      await this.viewer.loadImage(url, transition);
+      await this.viewer.loadImage(url, transition)
     }
   }
 
@@ -206,7 +210,7 @@ export class PanoramaViewerElement extends LitElement {
    */
   public reset(): void {
     if (this.viewer) {
-      this.viewer.reset();
+      this.viewer.reset()
     }
   }
 
@@ -215,7 +219,7 @@ export class PanoramaViewerElement extends LitElement {
    */
   public enableAutoRotate(): void {
     if (this.viewer) {
-      this.viewer.enableAutoRotate();
+      this.viewer.enableAutoRotate()
     }
   }
 
@@ -224,7 +228,7 @@ export class PanoramaViewerElement extends LitElement {
    */
   public disableAutoRotate(): void {
     if (this.viewer) {
-      this.viewer.disableAutoRotate();
+      this.viewer.disableAutoRotate()
     }
   }
 
@@ -233,9 +237,9 @@ export class PanoramaViewerElement extends LitElement {
    */
   public async enableGyroscope(): Promise<boolean> {
     if (this.viewer) {
-      return await this.viewer.enableGyroscope();
+      return await this.viewer.enableGyroscope()
     }
-    return false;
+    return false
   }
 
   /**
@@ -243,18 +247,18 @@ export class PanoramaViewerElement extends LitElement {
    */
   public disableGyroscope(): void {
     if (this.viewer) {
-      this.viewer.disableGyroscope();
+      this.viewer.disableGyroscope()
     }
   }
 
   /**
    * Get the current camera rotation
    */
-  public getRotation(): { x: number; y: number; z: number } {
+  public getRotation(): { x: number, y: number, z: number } {
     if (this.viewer) {
-      return this.viewer.getRotation();
+      return this.viewer.getRotation()
     }
-    return { x: 0, y: 0, z: 0 };
+    return { x: 0, y: 0, z: 0 }
   }
 
   /**
@@ -262,7 +266,7 @@ export class PanoramaViewerElement extends LitElement {
    */
   public setRotation(x: number, y: number, z: number): void {
     if (this.viewer) {
-      this.viewer.setRotation(x, y, z);
+      this.viewer.setRotation(x, y, z)
     }
   }
 
@@ -271,7 +275,7 @@ export class PanoramaViewerElement extends LitElement {
    */
   public addHotspot(hotspot: Hotspot): void {
     if (this.viewer) {
-      this.viewer.addHotspot(hotspot);
+      this.viewer.addHotspot(hotspot)
     }
   }
 
@@ -280,7 +284,7 @@ export class PanoramaViewerElement extends LitElement {
    */
   public removeHotspot(id: string): void {
     if (this.viewer) {
-      this.viewer.removeHotspot(id);
+      this.viewer.removeHotspot(id)
     }
   }
 
@@ -289,9 +293,9 @@ export class PanoramaViewerElement extends LitElement {
    */
   public getHotspots(): Hotspot[] {
     if (this.viewer) {
-      return this.viewer.getHotspots();
+      return this.viewer.getHotspots()
     }
-    return [];
+    return []
   }
 
   /**
@@ -299,7 +303,7 @@ export class PanoramaViewerElement extends LitElement {
    */
   public async enterFullscreen(): Promise<void> {
     if (this.viewer) {
-      await this.viewer.enterFullscreen();
+      await this.viewer.enterFullscreen()
     }
   }
 
@@ -308,7 +312,7 @@ export class PanoramaViewerElement extends LitElement {
    */
   public exitFullscreen(): void {
     if (this.viewer) {
-      this.viewer.exitFullscreen();
+      this.viewer.exitFullscreen()
     }
   }
 
@@ -317,9 +321,9 @@ export class PanoramaViewerElement extends LitElement {
    */
   public isFullscreen(): boolean {
     if (this.viewer) {
-      return this.viewer.isFullscreen();
+      return this.viewer.isFullscreen()
     }
-    return false;
+    return false
   }
 
   /**
@@ -327,50 +331,50 @@ export class PanoramaViewerElement extends LitElement {
    */
   public screenshot(width?: number, height?: number): string {
     if (this.viewer) {
-      return this.viewer.screenshot(width, height);
+      return this.viewer.screenshot(width, height)
     }
-    return '';
+    return ''
   }
 
   /**
    * Set view limits
    */
-  public setViewLimits(limits: ViewLimits | null): void {
+  public setViewLimits(limits: ViewLimits | undefined): void {
     if (this.viewer) {
-      this.viewer.setViewLimits(limits);
+      this.viewer.setViewLimits(limits ?? null)
     }
   }
 
   /**
    * Show mini map
    */
-  public showMiniMap(): void {
+  public showMiniMapView(): void {
     if (this.viewer) {
-      this.viewer.showMiniMap();
+      this.viewer.showMiniMap()
     }
   }
 
   /**
    * Hide mini map
    */
-  public hideMiniMap(): void {
+  public hideMiniMapView(): void {
     if (this.viewer) {
-      this.viewer.hideMiniMap();
+      this.viewer.hideMiniMap()
     }
   }
 
   /**
    * Toggle mini map visibility
    */
-  public toggleMiniMap(): void {
+  public toggleMiniMapView(): void {
     if (this.viewer) {
-      this.viewer.toggleMiniMap();
+      this.viewer.toggleMiniMap()
     }
   }
 }
 
 declare global {
   interface HTMLElementTagNameMap {
-    'panorama-viewer': PanoramaViewerElement;
+    'panorama-viewer': PanoramaViewerElement
   }
 }

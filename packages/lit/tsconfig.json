@@ -1,14 +1,12 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "outDir": "dist",
+    "useDefineForClassFields": false,
+    "experimentalDecorators": true,
     "rootDir": "src",
     "declarationDir": "dist",
-    "experimentalDecorators": true,
-    "useDefineForClassFields": false
+    "outDir": "dist"
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }
-
-

@@ -3,31 +3,31 @@
  * 提供电影级调色预设和自定义LUT支持
  */
 
-import * as THREE from 'three';
+import * as THREE from 'three'
 
 export interface ColorGradingSettings {
   // 基础调整
-  brightness: number;      // -1 to 1
-  contrast: number;        // 0 to 2
-  saturation: number;      // 0 to 2
-  exposure: number;        // -2 to 2
+  brightness: number // -1 to 1
+  contrast: number // 0 to 2
+  saturation: number // 0 to 2
+  exposure: number // -2 to 2
 
   // 色调
-  temperature: number;     // -1 to 1 (蓝色 -> 黄色)
-  tint: number;           // -1 to 1 (绿色 -> 品红)
+  temperature: number // -1 to 1 (蓝色 -> 黄色)
+  tint: number // -1 to 1 (绿色 -> 品红)
 
   // 高级
-  highlights: number;      // -1 to 1
-  shadows: number;         // -1 to 1
-  whites: number;          // -1 to 1
-  blacks: number;          // -1 to 1
+  highlights: number // -1 to 1
+  shadows: number // -1 to 1
+  whites: number // -1 to 1
+  blacks: number // -1 to 1
 
   // 色相/饱和度
-  hue: number;            // -180 to 180
+  hue: number // -180 to 180
 
   // Vignette
-  vignetteAmount: number;  // 0 to 1
-  vignetteSmoothing: number; // 0 to 1
+  vignetteAmount: number // 0 to 1
+  vignetteSmoothing: number // 0 to 1
 }
 
 export type ColorGradingPreset =
@@ -40,12 +40,12 @@ export type ColorGradingPreset =
   | 'dramatic'
   | 'sunset'
   | 'moonlight'
-  | 'noir';
+  | 'noir'
 
 export class ColorGrading {
-  private settings: ColorGradingSettings;
-  private lutTexture: THREE.DataTexture | null = null;
-  private uniforms: Record<string, THREE.IUniform>;
+  private settings: ColorGradingSettings
+  private lutTexture: THREE.DataTexture | null = null
+  private uniforms: Record<string, THREE.IUniform>
 
   // 默认设置
   private static readonly defaultSettings: ColorGradingSettings = {
@@ -62,11 +62,11 @@ export class ColorGrading {
     hue: 0,
     vignetteAmount: 0,
     vignetteSmoothing: 0.5,
-  };
+  }
 
   constructor(settings?: Partial<ColorGradingSettings>) {
-    this.settings = { ...ColorGrading.defaultSettings, ...settings };
-    this.uniforms = this.createUniforms();
+    this.settings = { ...ColorGrading.defaultSettings, ...settings }
+    this.uniforms = this.createUniforms()
   }
 
   /**
@@ -81,14 +81,14 @@ export class ColorGrading {
       temperature: { value: this.settings.temperature },
       tint: { value: this.settings.tint },
       highlights: { value: this.settings.highlights },
-      shadows: { value: this.shadows },
+      shadows: { value: this.settings.shadows },
       whites: { value: this.settings.whites },
       blacks: { value: this.settings.blacks },
       hue: { value: this.settings.hue },
       vignetteAmount: { value: this.settings.vignetteAmount },
       vignetteSmoothing: { value: this.settings.vignetteSmoothing },
       lutTexture: { value: this.lutTexture },
-    };
+    }
   }
 
   /**
@@ -182,7 +182,7 @@ export class ColorGrading {
         
         return clamp(color, 0.0, 1.0);
       }
-    `;
+    `
   }
 
   /**
@@ -263,43 +263,43 @@ export class ColorGrading {
         shadows: 0.3,
         vignetteAmount: 0.6,
       },
-    };
+    }
 
-    const presetSettings = presets[preset];
-    this.updateSettings(presetSettings);
+    const presetSettings = presets[preset]
+    this.updateSettings(presetSettings)
   }
 
   /**
    * 更新设置
    */
   public updateSettings(settings: Partial<ColorGradingSettings>): void {
-    Object.assign(this.settings, settings);
-    this.updateUniforms();
+    Object.assign(this.settings, settings)
+    this.updateUniforms()
   }
 
   /**
    * 更新 uniforms
    */
   private updateUniforms(): void {
-    Object.keys(this.settings).forEach(key => {
+    Object.keys(this.settings).forEach((key) => {
       if (this.uniforms[key]) {
-        this.uniforms[key].value = this.settings[key as keyof ColorGradingSettings];
+        this.uniforms[key].value = this.settings[key as keyof ColorGradingSettings]
       }
-    });
+    })
   }
 
   /**
    * 获取当前设置
    */
   public getSettings(): ColorGradingSettings {
-    return { ...this.settings };
+    return { ...this.settings }
   }
 
   /**
    * 获取 uniforms
    */
   public getUniforms(): Record<string, THREE.IUniform> {
-    return this.uniforms;
+    return this.uniforms
   }
 
   /**
@@ -307,70 +307,70 @@ export class ColorGrading {
    */
   public async loadLUT(url: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      const loader = new THREE.TextureLoader();
+      const loader = new THREE.TextureLoader()
       loader.load(
         url,
         (texture) => {
-          this.lutTexture = texture as THREE.DataTexture;
-          this.lutTexture.minFilter = THREE.LinearFilter;
-          this.lutTexture.magFilter = THREE.LinearFilter;
-          this.lutTexture.wrapS = THREE.ClampToEdgeWrapping;
-          this.lutTexture.wrapT = THREE.ClampToEdgeWrapping;
+          this.lutTexture = texture as THREE.DataTexture
+          this.lutTexture.minFilter = THREE.LinearFilter
+          this.lutTexture.magFilter = THREE.LinearFilter
+          this.lutTexture.wrapS = THREE.ClampToEdgeWrapping
+          this.lutTexture.wrapT = THREE.ClampToEdgeWrapping
 
-          this.uniforms.lutTexture.value = this.lutTexture;
-          resolve();
+          this.uniforms.lutTexture.value = this.lutTexture
+          resolve()
         },
         undefined,
-        reject
-      );
-    });
+        reject,
+      )
+    })
   }
 
   /**
    * 创建 3D LUT
    */
   public create3DLUT(size: number = 32): THREE.DataTexture {
-    const data = new Uint8Array(size * size * size * 4);
+    const data = new Uint8Array(size * size * size * 4)
 
-    let i = 0;
+    let i = 0
     for (let b = 0; b < size; b++) {
       for (let g = 0; g < size; g++) {
         for (let r = 0; r < size; r++) {
-          data[i++] = Math.floor((r / (size - 1)) * 255);
-          data[i++] = Math.floor((g / (size - 1)) * 255);
-          data[i++] = Math.floor((b / (size - 1)) * 255);
-          data[i++] = 255;
+          data[i++] = Math.floor((r / (size - 1)) * 255)
+          data[i++] = Math.floor((g / (size - 1)) * 255)
+          data[i++] = Math.floor((b / (size - 1)) * 255)
+          data[i++] = 255
         }
       }
     }
 
-    const texture = new THREE.DataTexture(data, size * size, size, THREE.RGBAFormat);
-    texture.needsUpdate = true;
+    const texture = new THREE.DataTexture(data, size * size, size, THREE.RGBAFormat)
+    texture.needsUpdate = true
 
-    return texture;
+    return texture
   }
 
   /**
    * 重置为默认值
    */
   public reset(): void {
-    this.settings = { ...ColorGrading.defaultSettings };
-    this.updateUniforms();
+    this.settings = { ...ColorGrading.defaultSettings }
+    this.updateUniforms()
   }
 
   /**
    * 导出设置
    */
   public exportSettings(): ColorGradingSettings {
-    return { ...this.settings };
+    return { ...this.settings }
   }
 
   /**
    * 导入设置
    */
   public importSettings(settings: ColorGradingSettings): void {
-    this.settings = { ...settings };
-    this.updateUniforms();
+    this.settings = { ...settings }
+    this.updateUniforms()
   }
 
   /**
@@ -378,9 +378,8 @@ export class ColorGrading {
    */
   public dispose(): void {
     if (this.lutTexture) {
-      this.lutTexture.dispose();
-      this.lutTexture = null;
+      this.lutTexture.dispose()
+      this.lutTexture = null
     }
   }
 }
-

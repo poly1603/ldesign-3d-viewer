@@ -1,0 +1,55 @@
+{
+  "name": "@ldesign/3d-viewer-qwik",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Qwik wrapper for 3D Panorama Viewer",
+  "author": "",
+  "license": "MIT",
+  "keywords": [
+    "panorama",
+    "3d",
+    "viewer",
+    "qwik",
+    "threejs"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "qwik": "./dist/index.qwik.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --noEmit",
+    "clean": "rimraf dist"
+  },
+  "peerDependencies": {
+    "@builder.io/qwik": "^1.2.0",
+    "@panorama-viewer/core": "workspace:*",
+    "three": "^0.160.0"
+  },
+  "dependencies": {
+    "@panorama-viewer/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^2.6.0",
+    "@builder.io/qwik": "^1.4.0",
+    "@types/three": "^0.160.0",
+    "eslint": "^8.56.0",
+    "rimraf": "^5.0.5",
+    "three": "^0.160.0",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3"
+  }
+}

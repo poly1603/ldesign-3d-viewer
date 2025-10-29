@@ -1,16 +1,18 @@
-import * as THREE from 'three';
+import * as THREE from 'three'
+import { logger } from '../core/Logger'
 
 /**
  * WebWorker-based texture loader for non-blocking image loading
  * Significantly improves performance by loading textures in background
  */
 export class WebWorkerTextureLoader {
-  private worker: Worker | null = null;
+  private worker: Worker | null = null
   private pendingLoads: Map<string, {
-    resolve: (texture: THREE.Texture) => void;
-    reject: (error: Error) => void;
-  }> = new Map();
-  private loadCounter = 0;
+    resolve: (texture: THREE.Texture) => void
+    reject: (error: Error) => void
+  }> = new Map()
+
+  private loadCounter = 0
 
   constructor() {
     if (typeof Worker !== 'undefined') {
@@ -43,78 +45,81 @@ export class WebWorkerTextureLoader {
               }
             }
           };
-        `;
-        
-        const blob = new Blob([workerCode], { type: 'application/javascript' });
-        this.worker = new Worker(URL.createObjectURL(blob));
-        this.worker.onmessage = this.handleMessage.bind(this);
-      } catch (error) {
-        console.warn('WebWorker not available, falling back to main thread loading');
+        `
+
+        const blob = new Blob([workerCode], { type: 'application/javascript' })
+        this.worker = new Worker(URL.createObjectURL(blob))
+        this.worker.onmessage = this.handleMessage.bind(this)
+      }
+      catch {
+        logger.warn('WebWorker not available, falling back to main thread loading')
       }
     }
   }
 
   private handleMessage(e: MessageEvent): void {
-    const { type, id, imageData, error } = e.data;
+    const { type, id, imageData, error } = e.data
 
-    const pending = this.pendingLoads.get(id);
-    if (!pending) return;
+    const pending = this.pendingLoads.get(id)
+    if (!pending)
+      return
 
-    this.pendingLoads.delete(id);
+    this.pendingLoads.delete(id)
 
     if (type === 'loaded') {
       try {
-        const texture = new THREE.Texture(imageData);
-        texture.needsUpdate = true;
-        texture.colorSpace = THREE.SRGBColorSpace;
-        pending.resolve(texture);
-      } catch (err) {
-        pending.reject(err as Error);
+        const texture = new THREE.Texture(imageData)
+        texture.needsUpdate = true
+        texture.colorSpace = THREE.SRGBColorSpace
+        pending.resolve(texture)
       }
-    } else if (type === 'error') {
-      pending.reject(new Error(error));
+      catch (err) {
+        pending.reject(err as Error)
+      }
+    }
+    else if (type === 'error') {
+      pending.reject(new Error(error))
     }
   }
 
   public async load(url: string): Promise<THREE.Texture> {
     // Fallback to regular loader if worker not available
     if (!this.worker) {
-      return this.loadFallback(url);
+      return this.loadFallback(url)
     }
 
     return new Promise((resolve, reject) => {
-      const id = `texture-${++this.loadCounter}`;
-      this.pendingLoads.set(id, { resolve, reject });
+      const id = `texture-${++this.loadCounter}`
+      this.pendingLoads.set(id, { resolve, reject })
 
       this.worker!.postMessage({
         type: 'load',
         url,
         id,
-      });
-    });
+      })
+    })
   }
 
   private async loadFallback(url: string): Promise<THREE.Texture> {
     return new Promise((resolve, reject) => {
-      const loader = new THREE.TextureLoader();
+      const loader = new THREE.TextureLoader()
       loader.load(
         url,
         (texture) => {
-          texture.colorSpace = THREE.SRGBColorSpace;
-          resolve(texture);
+          texture.colorSpace = THREE.SRGBColorSpace
+          resolve(texture)
         },
         undefined,
-        (error) => reject(error)
-      );
-    });
+        error => reject(error),
+      )
+    })
   }
 
   public dispose(): void {
     if (this.worker) {
-      this.worker.terminate();
-      this.worker = null;
+      this.worker.terminate()
+      this.worker = null
     }
-    this.pendingLoads.clear();
+    this.pendingLoads.clear()
   }
 }
-

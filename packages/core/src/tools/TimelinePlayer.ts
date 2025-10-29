@@ -4,37 +4,37 @@
  */
 
 export interface TimelineFrame {
-  timestamp: number; // Unix时间戳或相对时间
-  imageUrl: string;
-  label?: string;
-  data?: Record<string, any>;
+  timestamp: number // Unix时间戳或相对时间
+  imageUrl: string
+  label?: string
+  data?: Record<string, any>
 }
 
 export interface TimelineConfig {
-  frames: TimelineFrame[];
-  loop: boolean;
-  autoPlay: boolean;
-  playbackSpeed: number; // 1.0 = 实时速度
-  showControls: boolean;
+  frames: TimelineFrame[]
+  loop: boolean
+  autoPlay: boolean
+  playbackSpeed: number // 1.0 = 实时速度
+  showControls: boolean
 }
 
 export class TimelinePlayer {
-  private config: Required<TimelineConfig>;
-  private currentIndex = 0;
-  private isPlaying = false;
-  private startTime = 0;
-  private pauseTime = 0;
-  private controlsElement: HTMLElement | null = null;
-  private container: HTMLElement;
-  private onFrameChange?: (frame: TimelineFrame, index: number) => void;
+  private config: Required<TimelineConfig>
+  private currentIndex = 0
+  private isPlaying = false
+  private startTime = 0
+  private pauseTime = 0
+  private controlsElement: HTMLElement | null = null
+  private container: HTMLElement
+  private onFrameChange?: (frame: TimelineFrame, index: number) => void
 
   constructor(
     container: HTMLElement,
     config: Partial<TimelineConfig>,
-    onFrameChange?: (frame: TimelineFrame, index: number) => void
+    onFrameChange?: (frame: TimelineFrame, index: number) => void,
   ) {
-    this.container = container;
-    this.onFrameChange = onFrameChange;
+    this.container = container
+    this.onFrameChange = onFrameChange
 
     this.config = {
       frames: config.frames || [],
@@ -42,14 +42,14 @@ export class TimelinePlayer {
       autoPlay: config.autoPlay ?? false,
       playbackSpeed: config.playbackSpeed ?? 1.0,
       showControls: config.showControls ?? true,
-    };
+    }
 
     if (this.config.showControls) {
-      this.createControls();
+      this.createControls()
     }
 
     if (this.config.autoPlay) {
-      this.play();
+      this.play()
     }
   }
 
@@ -57,7 +57,7 @@ export class TimelinePlayer {
    * 创建控制面板
    */
   private createControls(): void {
-    this.controlsElement = document.createElement('div');
+    this.controlsElement = document.createElement('div')
     this.controlsElement.style.cssText = `
       position: absolute;
       bottom: 20px;
@@ -70,7 +70,7 @@ export class TimelinePlayer {
       font-family: Arial, sans-serif;
       z-index: 1000;
       min-width: 300px;
-    `;
+    `
 
     this.controlsElement.innerHTML = `
       <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
@@ -87,43 +87,44 @@ export class TimelinePlayer {
         <span id="timeline-label"></span>
         <span id="timeline-total">共 ${this.config.frames.length} 帧</span>
       </div>
-    `;
+    `
 
-    this.container.appendChild(this.controlsElement);
+    this.container.appendChild(this.controlsElement)
 
     // 绑定事件
-    this.controlsElement.querySelector('#timeline-play')?.addEventListener('click', () => this.play());
-    this.controlsElement.querySelector('#timeline-pause')?.addEventListener('click', () => this.pause());
-    this.controlsElement.querySelector('#timeline-prev')?.addEventListener('click', () => this.previous());
-    this.controlsElement.querySelector('#timeline-next')?.addEventListener('click', () => this.next());
+    this.controlsElement.querySelector('#timeline-play')?.addEventListener('click', () => this.play())
+    this.controlsElement.querySelector('#timeline-pause')?.addEventListener('click', () => this.pause())
+    this.controlsElement.querySelector('#timeline-prev')?.addEventListener('click', () => this.previous())
+    this.controlsElement.querySelector('#timeline-next')?.addEventListener('click', () => this.next())
 
-    const slider = this.controlsElement.querySelector('#timeline-slider') as HTMLInputElement;
+    const slider = this.controlsElement.querySelector('#timeline-slider') as HTMLInputElement
     slider?.addEventListener('input', (e) => {
-      const index = parseInt((e.target as HTMLInputElement).value);
-      this.seekTo(index);
-    });
+      const index = Number.parseInt((e.target as HTMLInputElement).value)
+      this.seekTo(index)
+    })
   }
 
   /**
    * 更新控制面板
    */
   private updateControls(): void {
-    if (!this.controlsElement) return;
+    if (!this.controlsElement)
+      return
 
-    const currentSpan = this.controlsElement.querySelector('#timeline-current');
-    const labelSpan = this.controlsElement.querySelector('#timeline-label');
-    const slider = this.controlsElement.querySelector('#timeline-slider') as HTMLInputElement;
+    const currentSpan = this.controlsElement.querySelector('#timeline-current')
+    const labelSpan = this.controlsElement.querySelector('#timeline-label')
+    const slider = this.controlsElement.querySelector('#timeline-slider') as HTMLInputElement
 
     if (currentSpan) {
-      currentSpan.textContent = `帧 ${this.currentIndex}`;
+      currentSpan.textContent = `帧 ${this.currentIndex}`
     }
 
     if (labelSpan && this.config.frames[this.currentIndex]?.label) {
-      labelSpan.textContent = this.config.frames[this.currentIndex].label!;
+      labelSpan.textContent = this.config.frames[this.currentIndex].label!
     }
 
     if (slider) {
-      slider.value = String(this.currentIndex);
+      slider.value = String(this.currentIndex)
     }
   }
 
@@ -131,82 +132,87 @@ export class TimelinePlayer {
    * 播放
    */
   public play(): void {
-    if (this.isPlaying) return;
+    if (this.isPlaying)
+      return
 
-    this.isPlaying = true;
-    this.startTime = Date.now() - this.pauseTime;
-    this.animate();
+    this.isPlaying = true
+    this.startTime = Date.now() - this.pauseTime
+    this.animate()
   }
 
   /**
    * 暂停
    */
   public pause(): void {
-    if (!this.isPlaying) return;
+    if (!this.isPlaying)
+      return
 
-    this.isPlaying = false;
-    this.pauseTime = Date.now() - this.startTime;
+    this.isPlaying = false
+    this.pauseTime = Date.now() - this.startTime
   }
 
   /**
    * 停止
    */
   public stop(): void {
-    this.isPlaying = false;
-    this.currentIndex = 0;
-    this.pauseTime = 0;
-    this.updateFrame();
+    this.isPlaying = false
+    this.currentIndex = 0
+    this.pauseTime = 0
+    this.updateFrame()
   }
 
   /**
    * 动画循环
    */
   private animate(): void {
-    if (!this.isPlaying) return;
+    if (!this.isPlaying)
+      return
 
-    const elapsed = (Date.now() - this.startTime) * this.config.playbackSpeed;
+    const elapsed = (Date.now() - this.startTime) * this.config.playbackSpeed
 
     // 计算当前应该显示的帧
-    const frames = this.config.frames;
-    if (frames.length === 0) return;
+    const frames = this.config.frames
+    if (frames.length === 0)
+      return
 
     // 简化：基于索引播放
-    const targetIndex = Math.floor(elapsed / 1000) % frames.length;
+    const targetIndex = Math.floor(elapsed / 1000) % frames.length
 
     if (targetIndex !== this.currentIndex) {
-      this.currentIndex = targetIndex;
-      this.updateFrame();
+      this.currentIndex = targetIndex
+      this.updateFrame()
 
       // 检查是否到达结尾
       if (this.currentIndex >= frames.length - 1 && !this.config.loop) {
-        this.pause();
-        return;
+        this.pause()
+        return
       }
     }
 
-    requestAnimationFrame(() => this.animate());
+    requestAnimationFrame(() => this.animate())
   }
 
   /**
    * 更新帧
    */
   private updateFrame(): void {
-    const frame = this.config.frames[this.currentIndex];
-    if (!frame) return;
+    const frame = this.config.frames[this.currentIndex]
+    if (!frame)
+      return
 
     if (this.onFrameChange) {
-      this.onFrameChange(frame, this.currentIndex);
+      this.onFrameChange(frame, this.currentIndex)
     }
 
-    this.updateControls();
+    this.updateControls()
   }
 
   /**
    * 跳转到指定帧
    */
   public seekTo(index: number): void {
-    this.currentIndex = Math.max(0, Math.min(index, this.config.frames.length - 1));
-    this.updateFrame();
+    this.currentIndex = Math.max(0, Math.min(index, this.config.frames.length - 1))
+    this.updateFrame()
   }
 
   /**
@@ -214,11 +220,12 @@ export class TimelinePlayer {
    */
   public next(): void {
     if (this.currentIndex < this.config.frames.length - 1) {
-      this.currentIndex++;
-    } else if (this.config.loop) {
-      this.currentIndex = 0;
+      this.currentIndex++
     }
-    this.updateFrame();
+    else if (this.config.loop) {
+      this.currentIndex = 0
+    }
+    this.updateFrame()
   }
 
   /**
@@ -226,26 +233,27 @@ export class TimelinePlayer {
    */
   public previous(): void {
     if (this.currentIndex > 0) {
-      this.currentIndex--;
-    } else if (this.config.loop) {
-      this.currentIndex = this.config.frames.length - 1;
+      this.currentIndex--
     }
-    this.updateFrame();
+    else if (this.config.loop) {
+      this.currentIndex = this.config.frames.length - 1
+    }
+    this.updateFrame()
   }
 
   /**
    * 设置播放速度
    */
   public setPlaybackSpeed(speed: number): void {
-    this.config.playbackSpeed = Math.max(0.1, Math.min(speed, 10));
+    this.config.playbackSpeed = Math.max(0.1, Math.min(speed, 10))
   }
 
   /**
    * 添加帧
    */
   public addFrame(frame: TimelineFrame): void {
-    this.config.frames.push(frame);
-    this.updateControls();
+    this.config.frames.push(frame)
+    this.updateControls()
   }
 
   /**
@@ -253,11 +261,11 @@ export class TimelinePlayer {
    */
   public removeFrame(index: number): void {
     if (index >= 0 && index < this.config.frames.length) {
-      this.config.frames.splice(index, 1);
+      this.config.frames.splice(index, 1)
       if (this.currentIndex >= this.config.frames.length) {
-        this.currentIndex = Math.max(0, this.config.frames.length - 1);
+        this.currentIndex = Math.max(0, this.config.frames.length - 1)
       }
-      this.updateControls();
+      this.updateControls()
     }
   }
 
@@ -265,10 +273,9 @@ export class TimelinePlayer {
    * 清理资源
    */
   public dispose(): void {
-    this.pause();
+    this.pause()
     if (this.controlsElement) {
-      this.controlsElement.remove();
+      this.controlsElement.remove()
     }
   }
 }
-

@@ -1,11 +1,11 @@
-import PanoramaViewer from './PanoramaViewer.vue';
+import PanoramaViewer from './PanoramaViewer.vue'
 
-export { PanoramaViewer };
-export default PanoramaViewer;
+export { PanoramaViewer }
+export default PanoramaViewer
 
 // Composition API
-export { usePanoramaViewer, useHotspots, useFullscreen } from './composables/usePanoramaViewer';
-export type { UsePanoramaViewerOptions, UsePanoramaViewerReturn } from './composables/usePanoramaViewer';
+export { usePanoramaViewer, useHotspots, useFullscreen } from './composables/usePanoramaViewer'
+export type { UsePanoramaViewerOptions, UsePanoramaViewerReturn } from './composables/usePanoramaViewer'
 
 // 重新导出核心类型
 export type {
@@ -15,6 +15,4 @@ export type {
   CubemapImages,
   QualityPreset,
   PerformanceStats,
-} from '@panorama-viewer/core';
-
-
+} from '@panorama-viewer/core'

@@ -2,15 +2,15 @@
  * Color adjustment system
  * Adjust brightness, contrast, saturation, hue, etc.
  */
-import * as THREE from 'three';
+import * as THREE from 'three'
 
 export interface ColorSettings {
-  brightness: number; // -1 to 1
-  contrast: number; // -1 to 1
-  saturation: number; // -1 to 1
-  hue: number; // 0 to 360
-  exposure: number; // -2 to 2
-  temperature: number; // -1 to 1 (cool to warm)
+  brightness: number // -1 to 1
+  contrast: number // -1 to 1
+  saturation: number // -1 to 1
+  hue: number // 0 to 360
+  exposure: number // -2 to 2
+  temperature: number // -1 to 1 (cool to warm)
 }
 
 export class ColorAdjustment {
@@ -21,12 +21,12 @@ export class ColorAdjustment {
     hue: 0,
     exposure: 0,
     temperature: 0,
-  };
+  }
 
-  private material: THREE.ShaderMaterial | null = null;
+  private material: THREE.ShaderMaterial | null = null
 
   constructor() {
-    this.createMaterial();
+    this.createMaterial()
   }
 
   private createMaterial(): void {
@@ -85,7 +85,7 @@ export class ColorAdjustment {
 
         gl_FragColor = vec4(color, texel.a);
       }
-    `;
+    `
 
     const vertexShader = `
       varying vec2 vUv;
@@ -93,7 +93,7 @@ export class ColorAdjustment {
         vUv = uv;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }
-    `;
+    `
 
     this.material = new THREE.ShaderMaterial({
       uniforms: {
@@ -107,7 +107,7 @@ export class ColorAdjustment {
       },
       vertexShader,
       fragmentShader,
-    });
+    })
   }
 
   /**
@@ -117,12 +117,12 @@ export class ColorAdjustment {
     if (material instanceof THREE.MeshBasicMaterial) {
       // For basic materials, we need to use onBeforeCompile
       material.onBeforeCompile = (shader) => {
-        shader.uniforms.brightness = { value: this.settings.brightness };
-        shader.uniforms.contrast = { value: this.settings.contrast };
-        shader.uniforms.saturation = { value: this.settings.saturation };
-        shader.uniforms.hue = { value: this.settings.hue };
-        shader.uniforms.exposure = { value: this.settings.exposure };
-        shader.uniforms.temperature = { value: this.settings.temperature };
+        shader.uniforms.brightness = { value: this.settings.brightness }
+        shader.uniforms.contrast = { value: this.settings.contrast }
+        shader.uniforms.saturation = { value: this.settings.saturation }
+        shader.uniforms.hue = { value: this.settings.hue }
+        shader.uniforms.exposure = { value: this.settings.exposure }
+        shader.uniforms.temperature = { value: this.settings.temperature }
 
         // Inject uniforms and shader code
         shader.fragmentShader = shader.fragmentShader.replace(
@@ -136,10 +136,10 @@ export class ColorAdjustment {
           adjustedColor.b -= temperature * 0.1;
           adjustedColor = clamp(adjustedColor, 0.0, 1.0);
           gl_FragColor = vec4(adjustedColor, diffuseColor.a);
-          `
-        );
-      };
-      material.needsUpdate = true;
+          `,
+        )
+      }
+      material.needsUpdate = true
     }
   }
 
@@ -147,48 +147,48 @@ export class ColorAdjustment {
    * Set brightness (-1 to 1)
    */
   public setBrightness(value: number): void {
-    this.settings.brightness = Math.max(-1, Math.min(1, value));
-    this.updateUniforms();
+    this.settings.brightness = Math.max(-1, Math.min(1, value))
+    this.updateUniforms()
   }
 
   /**
    * Set contrast (-1 to 1)
    */
   public setContrast(value: number): void {
-    this.settings.contrast = Math.max(-1, Math.min(1, value));
-    this.updateUniforms();
+    this.settings.contrast = Math.max(-1, Math.min(1, value))
+    this.updateUniforms()
   }
 
   /**
    * Set saturation (-1 to 1)
    */
   public setSaturation(value: number): void {
-    this.settings.saturation = Math.max(-1, Math.min(1, value));
-    this.updateUniforms();
+    this.settings.saturation = Math.max(-1, Math.min(1, value))
+    this.updateUniforms()
   }
 
   /**
    * Set hue (0 to 360)
    */
   public setHue(value: number): void {
-    this.settings.hue = value % 360;
-    this.updateUniforms();
+    this.settings.hue = value % 360
+    this.updateUniforms()
   }
 
   /**
    * Set exposure (-2 to 2)
    */
   public setExposure(value: number): void {
-    this.settings.exposure = Math.max(-2, Math.min(2, value));
-    this.updateUniforms();
+    this.settings.exposure = Math.max(-2, Math.min(2, value))
+    this.updateUniforms()
   }
 
   /**
    * Set temperature (-1 to 1, cool to warm)
    */
   public setTemperature(value: number): void {
-    this.settings.temperature = Math.max(-1, Math.min(1, value));
-    this.updateUniforms();
+    this.settings.temperature = Math.max(-1, Math.min(1, value))
+    this.updateUniforms()
   }
 
   /**
@@ -202,40 +202,39 @@ export class ColorAdjustment {
       hue: 0,
       exposure: 0,
       temperature: 0,
-    };
-    this.updateUniforms();
+    }
+    this.updateUniforms()
   }
 
   /**
    * Get current settings
    */
   public getSettings(): ColorSettings {
-    return { ...this.settings };
+    return { ...this.settings }
   }
 
   /**
    * Set all settings at once
    */
   public setSettings(settings: Partial<ColorSettings>): void {
-    Object.assign(this.settings, settings);
-    this.updateUniforms();
+    Object.assign(this.settings, settings)
+    this.updateUniforms()
   }
 
   private updateUniforms(): void {
     if (this.material) {
-      this.material.uniforms.brightness.value = this.settings.brightness;
-      this.material.uniforms.contrast.value = this.settings.contrast;
-      this.material.uniforms.saturation.value = this.settings.saturation;
-      this.material.uniforms.hue.value = this.settings.hue;
-      this.material.uniforms.exposure.value = this.settings.exposure;
-      this.material.uniforms.temperature.value = this.settings.temperature;
+      this.material.uniforms.brightness.value = this.settings.brightness
+      this.material.uniforms.contrast.value = this.settings.contrast
+      this.material.uniforms.saturation.value = this.settings.saturation
+      this.material.uniforms.hue.value = this.settings.hue
+      this.material.uniforms.exposure.value = this.settings.exposure
+      this.material.uniforms.temperature.value = this.settings.temperature
     }
   }
 
   public dispose(): void {
     if (this.material) {
-      this.material.dispose();
+      this.material.dispose()
     }
   }
 }
-

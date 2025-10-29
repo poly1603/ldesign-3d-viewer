@@ -3,7 +3,7 @@
  * 支持：黑白、复古、暖色、冷色、高对比度等多种预设滤镜
  */
 
-import * as THREE from 'three';
+import * as THREE from 'three'
 
 export enum FilterPreset {
   NONE = 'none',
@@ -21,20 +21,20 @@ export enum FilterPreset {
 }
 
 export interface FilterSettings {
-  brightness?: number; // -1 to 1
-  contrast?: number; // -1 to 1
-  saturation?: number; // -1 to 1
-  hue?: number; // -180 to 180
-  temperature?: number; // -1 to 1 (cool to warm)
-  tint?: number; // -1 to 1 (green to magenta)
-  vignette?: number; // 0 to 1
-  grain?: number; // 0 to 1
+  brightness?: number // -1 to 1
+  contrast?: number // -1 to 1
+  saturation?: number // -1 to 1
+  hue?: number // -180 to 180
+  temperature?: number // -1 to 1 (cool to warm)
+  tint?: number // -1 to 1 (green to magenta)
+  vignette?: number // 0 to 1
+  grain?: number // 0 to 1
 }
 
 export class Filters {
-  private material: THREE.ShaderMaterial;
-  private settings: Required<FilterSettings>;
-  private currentPreset: FilterPreset = FilterPreset.NONE;
+  private material: THREE.ShaderMaterial
+  private settings: Required<FilterSettings>
+  private currentPreset: FilterPreset = FilterPreset.NONE
 
   constructor() {
     this.settings = {
@@ -46,9 +46,9 @@ export class Filters {
       tint: 0,
       vignette: 0,
       grain: 0,
-    };
+    }
 
-    this.material = this.createFilterMaterial();
+    this.material = this.createFilterMaterial()
   }
 
   /**
@@ -163,23 +163,23 @@ export class Filters {
           gl_FragColor = vec4(rgb, color.a);
         }
       `,
-    });
+    })
   }
 
   /**
    * 应用滤镜到材质
    */
   public applyToMaterial(material: THREE.Material): void {
-    if (material instanceof THREE.MeshBasicMaterial || 
-        material instanceof THREE.MeshStandardMaterial) {
+    if (material instanceof THREE.MeshBasicMaterial
+      || material instanceof THREE.MeshStandardMaterial) {
       // 应用滤镜设置到材质
       // 注意：这里需要使用着色器材质或后处理效果来实现
       // 简化版本：直接修改材质颜色
-      const factor = 1 + this.settings.brightness;
+      const factor = 1 + this.settings.brightness
       if (material.color) {
-        material.color.multiplyScalar(factor);
+        material.color.multiplyScalar(factor)
       }
-      material.needsUpdate = true;
+      material.needsUpdate = true
     }
   }
 
@@ -187,19 +187,19 @@ export class Filters {
    * 应用预设滤镜
    */
   public applyPreset(preset: FilterPreset): void {
-    this.currentPreset = preset;
+    this.currentPreset = preset
 
     switch (preset) {
       case FilterPreset.NONE:
-        this.reset();
-        break;
+        this.reset()
+        break
 
       case FilterPreset.GRAYSCALE:
         this.setSettings({
           saturation: -1,
           contrast: 0.1,
-        });
-        break;
+        })
+        break
 
       case FilterPreset.SEPIA:
         this.setSettings({
@@ -207,24 +207,24 @@ export class Filters {
           temperature: 0.6,
           contrast: -0.1,
           brightness: 0.1,
-        });
-        break;
+        })
+        break
 
       case FilterPreset.WARM:
         this.setSettings({
           temperature: 0.5,
           saturation: 0.2,
           brightness: 0.05,
-        });
-        break;
+        })
+        break
 
       case FilterPreset.COOL:
         this.setSettings({
           temperature: -0.5,
           tint: -0.1,
           contrast: 0.1,
-        });
-        break;
+        })
+        break
 
       case FilterPreset.VINTAGE:
         this.setSettings({
@@ -233,32 +233,32 @@ export class Filters {
           vignette: 0.4,
           grain: 0.2,
           temperature: 0.3,
-        });
-        break;
+        })
+        break
 
       case FilterPreset.HIGH_CONTRAST:
         this.setSettings({
           contrast: 0.5,
           saturation: 0.3,
           brightness: 0.05,
-        });
-        break;
+        })
+        break
 
       case FilterPreset.SOFT:
         this.setSettings({
           contrast: -0.2,
           saturation: -0.1,
           brightness: 0.1,
-        });
-        break;
+        })
+        break
 
       case FilterPreset.VIVID:
         this.setSettings({
           saturation: 0.5,
           contrast: 0.2,
           brightness: 0.05,
-        });
-        break;
+        })
+        break
 
       case FilterPreset.NOIR:
         this.setSettings({
@@ -266,8 +266,8 @@ export class Filters {
           contrast: 0.6,
           brightness: -0.1,
           vignette: 0.5,
-        });
-        break;
+        })
+        break
 
       case FilterPreset.SUNSET:
         this.setSettings({
@@ -275,8 +275,8 @@ export class Filters {
           saturation: 0.3,
           hue: 10,
           vignette: 0.2,
-        });
-        break;
+        })
+        break
 
       case FilterPreset.MOONLIGHT:
         this.setSettings({
@@ -285,55 +285,55 @@ export class Filters {
           brightness: -0.2,
           contrast: 0.2,
           tint: -0.2,
-        });
-        break;
+        })
+        break
     }
 
-    this.updateUniforms();
+    this.updateUniforms()
   }
 
   /**
    * 设置滤镜参数
    */
   public setSettings(settings: Partial<FilterSettings>): void {
-    Object.assign(this.settings, settings);
-    this.updateUniforms();
+    Object.assign(this.settings, settings)
+    this.updateUniforms()
   }
 
   /**
    * 获取当前设置
    */
   public getSettings(): Readonly<FilterSettings> {
-    return { ...this.settings };
+    return { ...this.settings }
   }
 
   /**
    * 获取当前预设
    */
   public getCurrentPreset(): FilterPreset {
-    return this.currentPreset;
+    return this.currentPreset
   }
 
   /**
    * 更新着色器uniforms
    */
   private updateUniforms(): void {
-    this.material.uniforms.brightness.value = this.settings.brightness;
-    this.material.uniforms.contrast.value = this.settings.contrast;
-    this.material.uniforms.saturation.value = this.settings.saturation;
-    this.material.uniforms.hue.value = this.settings.hue;
-    this.material.uniforms.temperature.value = this.settings.temperature;
-    this.material.uniforms.tint.value = this.settings.tint;
-    this.material.uniforms.vignette.value = this.settings.vignette;
-    this.material.uniforms.grain.value = this.settings.grain;
-    this.material.needsUpdate = true;
+    this.material.uniforms.brightness.value = this.settings.brightness
+    this.material.uniforms.contrast.value = this.settings.contrast
+    this.material.uniforms.saturation.value = this.settings.saturation
+    this.material.uniforms.hue.value = this.settings.hue
+    this.material.uniforms.temperature.value = this.settings.temperature
+    this.material.uniforms.tint.value = this.settings.tint
+    this.material.uniforms.vignette.value = this.settings.vignette
+    this.material.uniforms.grain.value = this.settings.grain
+    this.material.needsUpdate = true
   }
 
   /**
    * 更新时间（用于动画效果，如胶片颗粒）
    */
   public updateTime(time: number): void {
-    this.material.uniforms.time.value = time;
+    this.material.uniforms.time.value = time
   }
 
   /**
@@ -349,23 +349,23 @@ export class Filters {
       tint: 0,
       vignette: 0,
       grain: 0,
-    };
-    this.currentPreset = FilterPreset.NONE;
-    this.updateUniforms();
+    }
+    this.currentPreset = FilterPreset.NONE
+    this.updateUniforms()
   }
 
   /**
    * 获取滤镜材质
    */
   public getMaterial(): THREE.ShaderMaterial {
-    return this.material;
+    return this.material
   }
 
   /**
    * 获取所有可用的预设
    */
   public static getAvailablePresets(): FilterPreset[] {
-    return Object.values(FilterPreset);
+    return Object.values(FilterPreset)
   }
 
   /**
@@ -385,15 +385,14 @@ export class Filters {
       [FilterPreset.NOIR]: '黑色电影 - 戏剧性的黑白',
       [FilterPreset.SUNSET]: '日落 - 温暖的黄昏色调',
       [FilterPreset.MOONLIGHT]: '月光 - 清冷的夜晚色调',
-    };
-    return descriptions[preset];
+    }
+    return descriptions[preset]
   }
 
   /**
    * 销毁滤镜
    */
   public dispose(): void {
-    this.material.dispose();
+    this.material.dispose()
   }
 }
-

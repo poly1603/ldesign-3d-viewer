@@ -2,85 +2,86 @@
  * React Hooks for PanoramaViewer
  */
 
-import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  PanoramaViewer,
   EventBus,
-  type ViewerOptions,
   type Hotspot,
+  PanoramaViewer,
   type PerformanceStats,
-} from '@panorama-viewer/core';
+  type ViewerOptions,
+} from '@panorama-viewer/core'
 
 export interface UsePanoramaViewerOptions extends Omit<ViewerOptions, 'container'> {
   /** 自动初始化 */
-  autoInit?: boolean;
+  autoInit?: boolean
   /** 启用性能监控 */
-  enablePerformanceMonitor?: boolean;
+  enablePerformanceMonitor?: boolean
 }
 
 export interface UsePanoramaViewerReturn {
   /** Container ref */
-  containerRef: React.RefObject<HTMLDivElement>;
+  containerRef: React.RefObject<HTMLDivElement>
   /** Viewer instance */
-  viewer: PanoramaViewer | null;
+  viewer: PanoramaViewer | null
   /** Event bus */
-  eventBus: EventBus;
+  eventBus: EventBus
   /** Is loading */
-  isLoading: boolean;
+  isLoading: boolean
   /** Loading progress */
-  loadingProgress: number;
+  loadingProgress: number
   /** Error */
-  error: Error | null;
+  error: Error | null
   /** Performance stats */
-  performanceStats: PerformanceStats | null;
+  performanceStats: PerformanceStats | null
   /** Is ready */
-  isReady: boolean;
+  isReady: boolean
 }
 
 /**
  * Use PanoramaViewer hook
  */
 export function usePanoramaViewer(
-  options: UsePanoramaViewerOptions
+  options: UsePanoramaViewerOptions,
 ): UsePanoramaViewerReturn {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const viewerRef = useRef<PanoramaViewer | null>(null);
-  const eventBusRef = useRef<EventBus>(new EventBus());
+  const containerRef = useRef<HTMLDivElement>(null)
+  const viewerRef = useRef<PanoramaViewer | null>(null)
+  const eventBusRef = useRef<EventBus>(new EventBus())
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadingProgress, setLoadingProgress] = useState(0);
-  const [error, setError] = useState<Error | null>(null);
-  const [performanceStats, setPerformanceStats] = useState<PerformanceStats | null>(null);
-  const [isReady, setIsReady] = useState(false);
+  const [isLoading, setIsLoading] = useState(false)
+  const [loadingProgress, setLoadingProgress] = useState(0)
+  const [error, setError] = useState<Error | null>(null)
+  const [performanceStats, setPerformanceStats] = useState<PerformanceStats | null>(null)
+  const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current)
+      return
 
-    const eventBus = eventBusRef.current;
+    const eventBus = eventBusRef.current
 
     // 订阅事件
     const unsubReady = eventBus.on('viewer:ready', () => {
-      setIsReady(true);
-    });
+      setIsReady(true)
+    })
 
     const unsubLoading = eventBus.on('image:loading', ({ progress }) => {
-      setIsLoading(true);
-      setLoadingProgress(progress);
-    });
+      setIsLoading(true)
+      setLoadingProgress(progress)
+    })
 
     const unsubLoaded = eventBus.on('image:loaded', () => {
-      setIsLoading(false);
-      setError(null);
-    });
+      setIsLoading(false)
+      setError(null)
+    })
 
     const unsubError = eventBus.on('image:error', ({ error: err }) => {
-      setIsLoading(false);
-      setError(err);
-    });
+      setIsLoading(false)
+      setError(err)
+    })
 
     const unsubStats = eventBus.on('performance:stats', (stats) => {
-      setPerformanceStats(stats as PerformanceStats);
-    });
+      setPerformanceStats(stats as PerformanceStats)
+    })
 
     // 创建 viewer
     try {
@@ -88,28 +89,29 @@ export function usePanoramaViewer(
         container: containerRef.current,
         enablePerformanceMonitor: options.enablePerformanceMonitor ?? true,
         ...options,
-      };
+      }
 
-      viewerRef.current = new PanoramaViewer(viewerOptions, eventBus);
-    } catch (err) {
-      setError(err as Error);
+      viewerRef.current = new PanoramaViewer(viewerOptions)
+    }
+    catch (err) {
+      setError(err as Error)
     }
 
     return () => {
       // 清理
-      unsubReady();
-      unsubLoading();
-      unsubLoaded();
-      unsubError();
-      unsubStats();
+      unsubReady()
+      unsubLoading()
+      unsubLoaded()
+      unsubError()
+      unsubStats()
 
       if (viewerRef.current) {
-        viewerRef.current.dispose();
-        viewerRef.current = null;
+        viewerRef.current.dispose()
+        viewerRef.current = null
       }
-      eventBus.dispose();
-    };
-  }, []); // 只初始化一次
+      eventBus.dispose()
+    }
+  }, []) // 只初始化一次
 
   return {
     containerRef,
@@ -120,79 +122,79 @@ export function usePanoramaViewer(
     error,
     performanceStats,
     isReady,
-  };
+  }
 }
 
 /**
  * Use hotspots hook
  */
 export function useHotspots(viewer: PanoramaViewer | null) {
-  const [hotspots, setHotspots] = useState<Hotspot[]>([]);
+  const [hotspots, setHotspots] = useState<Hotspot[]>([])
 
   const addHotspot = useCallback((hotspot: Hotspot) => {
     if (viewer) {
-      viewer.addHotspot(hotspot);
-      setHotspots(prev => [...prev, hotspot]);
+      viewer.addHotspot(hotspot)
+      setHotspots(prev => [...prev, hotspot])
     }
-  }, [viewer]);
+  }, [viewer])
 
   const removeHotspot = useCallback((id: string) => {
     if (viewer) {
-      viewer.removeHotspot(id);
-      setHotspots(prev => prev.filter(h => h.id !== id));
+      viewer.removeHotspot(id)
+      setHotspots(prev => prev.filter(h => h.id !== id))
     }
-  }, [viewer]);
+  }, [viewer])
 
   const clearHotspots = useCallback(() => {
-    hotspots.forEach(h => {
+    hotspots.forEach((h) => {
       if (viewer) {
-        viewer.removeHotspot(h.id);
+        viewer.removeHotspot(h.id)
       }
-    });
-    setHotspots([]);
-  }, [viewer, hotspots]);
+    })
+    setHotspots([])
+  }, [viewer, hotspots])
 
   return {
     hotspots,
     addHotspot,
     removeHotspot,
     clearHotspots,
-  };
+  }
 }
 
 /**
  * Use fullscreen hook
  */
 export function useFullscreen(viewer: PanoramaViewer | null) {
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   const enterFullscreen = useCallback(async () => {
     if (viewer) {
-      await viewer.enterFullscreen();
-      setIsFullscreen(true);
+      await viewer.enterFullscreen()
+      setIsFullscreen(true)
     }
-  }, [viewer]);
+  }, [viewer])
 
   const exitFullscreen = useCallback(() => {
     if (viewer) {
-      viewer.exitFullscreen();
-      setIsFullscreen(false);
+      viewer.exitFullscreen()
+      setIsFullscreen(false)
     }
-  }, [viewer]);
+  }, [viewer])
 
   const toggleFullscreen = useCallback(async () => {
     if (isFullscreen) {
-      exitFullscreen();
-    } else {
-      await enterFullscreen();
+      exitFullscreen()
     }
-  }, [isFullscreen, enterFullscreen, exitFullscreen]);
+    else {
+      await enterFullscreen()
+    }
+  }, [isFullscreen, enterFullscreen, exitFullscreen])
 
   return {
     isFullscreen,
     enterFullscreen,
     exitFullscreen,
     toggleFullscreen,
-  };
+  }
 }
-

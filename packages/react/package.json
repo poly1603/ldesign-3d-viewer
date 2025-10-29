@@ -2,49 +2,52 @@
   "name": "@panorama-viewer/react",
   "version": "1.0.0",
   "description": "React wrapper for panorama viewer",
-  "main": "dist/index.cjs.js",
-  "module": "dist/index.esm.js",
-  "types": "dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/index.esm.js",
-      "require": "./dist/index.cjs.js",
-      "types": "./dist/index.d.ts"
-    }
-  },
-  "files": [
-    "dist"
-  ],
-  "scripts": {
-    "build": "rollup -c",
-    "dev": "rollup -c -w",
-    "clean": "rm -rf dist"
-  },
+  "author": "",
+  "license": "MIT",
   "keywords": [
     "panorama",
     "react",
     "3d"
   ],
-  "author": "",
-  "license": "MIT",
-  "peerDependencies": {
-    "react": "^18.0.0",
-    "three": "^0.160.0",
-    "@panorama-viewer/core": "workspace:*"
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.cjs.js"
+    }
   },
-  "devDependencies": {
-    "@rollup/plugin-node-resolve": "^15.2.3",
-    "@rollup/plugin-typescript": "^11.1.5",
-    "@types/react": "^18.2.0",
-    "react": "^18.2.0",
-    "rollup": "^4.9.0",
-    "rollup-plugin-dts": "^6.1.0",
-    "tslib": "^2.6.2",
-    "typescript": "^5.3.3"
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --noEmit",
+    "clean": "rimraf dist"
+  },
+  "peerDependencies": {
+    "@panorama-viewer/core": "workspace:*",
+    "react": "^18.0.0",
+    "three": "^0.160.0"
   },
   "dependencies": {
     "@panorama-viewer/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^2.6.0",
+    "@eslint-react/eslint-plugin": "^2.2.4",
+    "@types/react": "^18.2.0",
+    "@types/three": "^0.160.0",
+    "eslint": "^8.56.0",
+    "react": "^18.2.0",
+    "rimraf": "^5.0.5",
+    "three": "^0.160.0",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3"
   }
 }
-
-

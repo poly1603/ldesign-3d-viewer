@@ -1,9 +1,9 @@
-import typescript from '@rollup/plugin-typescript';
-import resolve from '@rollup/plugin-node-resolve';
-import commonjs from '@rollup/plugin-commonjs';
-import esbuild from 'rollup-plugin-esbuild';
+import typescript from '@rollup/plugin-typescript'
+import resolve from '@rollup/plugin-node-resolve'
+import commonjs from '@rollup/plugin-commonjs'
+import esbuild from 'rollup-plugin-esbuild'
 
-const external = ['vue', 'three', '@panorama-viewer/core'];
+const external = ['vue', 'three', '@panorama-viewer/core']
 
 export default [
   // ESM build
@@ -78,5 +78,4 @@ export default [
       }),
     ],
   },
-];
-
+]

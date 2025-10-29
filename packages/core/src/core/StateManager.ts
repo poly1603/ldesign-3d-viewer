@@ -2,8 +2,8 @@
  * 状态机管理器 - 管理 Viewer 的各种状态
  */
 
-import { EventBus } from './EventBus';
-import { logger } from './Logger';
+import type { EventBus } from './EventBus'
+import { logger } from './Logger'
 
 export enum ViewerState {
   IDLE = 'idle',
@@ -36,25 +36,25 @@ export enum InteractionMode {
 }
 
 export interface ViewerStateData {
-  viewer: ViewerState;
-  controls: Set<ControlState>;
-  renderMode: RenderMode;
-  interactionMode: InteractionMode;
-  isAutoRotating: boolean;
-  isFullscreen: boolean;
-  isDragging: boolean;
-  isTransitioning: boolean;
-  quality: 'ultra' | 'high' | 'medium' | 'low';
+  viewer: ViewerState
+  controls: Set<ControlState>
+  renderMode: RenderMode
+  interactionMode: InteractionMode
+  isAutoRotating: boolean
+  isFullscreen: boolean
+  isDragging: boolean
+  isTransitioning: boolean
+  quality: 'ultra' | 'high' | 'medium' | 'low'
 }
 
 export class StateManager {
-  private state: ViewerStateData;
-  private eventBus: EventBus;
-  private stateHistory: Array<{ state: Partial<ViewerStateData>; timestamp: number }> = [];
-  private maxHistorySize: number = 50;
+  private state: ViewerStateData
+  private eventBus: EventBus
+  private stateHistory: Array<{ state: Partial<ViewerStateData>, timestamp: number }> = []
+  private maxHistorySize: number = 50
 
   constructor(eventBus: EventBus) {
-    this.eventBus = eventBus;
+    this.eventBus = eventBus
     this.state = {
       viewer: ViewerState.IDLE,
       controls: new Set(),
@@ -65,21 +65,21 @@ export class StateManager {
       isDragging: false,
       isTransitioning: false,
       quality: 'high',
-    };
+    }
   }
 
   /**
    * 获取当前状态
    */
   public getState(): Readonly<ViewerStateData> {
-    return { ...this.state, controls: new Set(this.state.controls) };
+    return { ...this.state, controls: new Set(this.state.controls) }
   }
 
   /**
    * 获取 Viewer 状态
    */
   public getViewerState(): ViewerState {
-    return this.state.viewer;
+    return this.state.viewer
   }
 
   /**
@@ -87,20 +87,21 @@ export class StateManager {
    */
   public setViewerState(newState: ViewerState): void {
     if (this.state.viewer === newState) {
-      return;
+      return
     }
 
-    const oldState = this.state.viewer;
-    this.state.viewer = newState;
+    const oldState = this.state.viewer
+    this.state.viewer = newState
 
-    this.recordStateChange({ viewer: newState });
-    logger.debug(`Viewer state changed: ${oldState} -> ${newState}`);
+    this.recordStateChange({ viewer: newState })
+    logger.debug(`Viewer state changed: ${oldState} -> ${newState}`)
 
     // 触发相应事件
     if (newState === ViewerState.READY) {
-      this.eventBus.emit('viewer:ready');
-    } else if (newState === ViewerState.ERROR) {
-      this.eventBus.emit('error', new Error('Viewer entered error state'));
+      this.eventBus.emit('viewer:ready')
+    }
+    else if (newState === ViewerState.ERROR) {
+      this.eventBus.emit('error', new Error('Viewer entered error state'))
     }
   }
 
@@ -109,31 +110,32 @@ export class StateManager {
    */
   public canInteract(): boolean {
     return (
-      this.state.viewer === ViewerState.READY &&
-      !this.state.isTransitioning &&
-      this.state.viewer !== ViewerState.DISPOSED
-    );
+      this.state.viewer === ViewerState.READY
+      && !this.state.isTransitioning
+      // @ts-expect-error - 类型比较已经在前面的条件中检查
+      && this.state.viewer !== ViewerState.DISPOSED
+    )
   }
 
   /**
    * 检查是否正在加载
    */
   public isLoading(): boolean {
-    return this.state.viewer === ViewerState.LOADING;
+    return this.state.viewer === ViewerState.LOADING
   }
 
   /**
    * 检查是否就绪
    */
   public isReady(): boolean {
-    return this.state.viewer === ViewerState.READY;
+    return this.state.viewer === ViewerState.READY
   }
 
   /**
    * 检查是否已销毁
    */
   public isDisposed(): boolean {
-    return this.state.viewer === ViewerState.DISPOSED;
+    return this.state.viewer === ViewerState.DISPOSED
   }
 
   /**
@@ -141,10 +143,10 @@ export class StateManager {
    */
   public enableControl(control: ControlState): void {
     if (!this.state.controls.has(control)) {
-      this.state.controls.add(control);
-      this.recordStateChange({ controls: new Set(this.state.controls) });
-      this.eventBus.emit('controls:enable', { type: control });
-      logger.debug(`Control enabled: ${control}`);
+      this.state.controls.add(control)
+      this.recordStateChange({ controls: new Set(this.state.controls) })
+      this.eventBus.emit('controls:enable', { type: control })
+      logger.debug(`Control enabled: ${control}`)
     }
   }
 
@@ -153,10 +155,10 @@ export class StateManager {
    */
   public disableControl(control: ControlState): void {
     if (this.state.controls.has(control)) {
-      this.state.controls.delete(control);
-      this.recordStateChange({ controls: new Set(this.state.controls) });
-      this.eventBus.emit('controls:disable', { type: control });
-      logger.debug(`Control disabled: ${control}`);
+      this.state.controls.delete(control)
+      this.recordStateChange({ controls: new Set(this.state.controls) })
+      this.eventBus.emit('controls:disable', { type: control })
+      logger.debug(`Control disabled: ${control}`)
     }
   }
 
@@ -164,7 +166,7 @@ export class StateManager {
    * 检查控制是否启用
    */
   public isControlEnabled(control: ControlState): boolean {
-    return this.state.controls.has(control);
+    return this.state.controls.has(control)
   }
 
   /**
@@ -172,9 +174,9 @@ export class StateManager {
    */
   public setRenderMode(mode: RenderMode): void {
     if (this.state.renderMode !== mode) {
-      this.state.renderMode = mode;
-      this.recordStateChange({ renderMode: mode });
-      logger.debug(`Render mode changed to: ${mode}`);
+      this.state.renderMode = mode
+      this.recordStateChange({ renderMode: mode })
+      logger.debug(`Render mode changed to: ${mode}`)
     }
   }
 
@@ -182,7 +184,7 @@ export class StateManager {
    * 获取渲染模式
    */
   public getRenderMode(): RenderMode {
-    return this.state.renderMode;
+    return this.state.renderMode
   }
 
   /**
@@ -190,10 +192,10 @@ export class StateManager {
    */
   public setInteractionMode(mode: InteractionMode): void {
     if (this.state.interactionMode !== mode) {
-      const oldMode = this.state.interactionMode;
-      this.state.interactionMode = mode;
-      this.recordStateChange({ interactionMode: mode });
-      logger.debug(`Interaction mode changed: ${oldMode} -> ${mode}`);
+      const oldMode = this.state.interactionMode
+      this.state.interactionMode = mode
+      this.recordStateChange({ interactionMode: mode })
+      logger.debug(`Interaction mode changed: ${oldMode} -> ${mode}`)
     }
   }
 
@@ -201,7 +203,7 @@ export class StateManager {
    * 获取交互模式
    */
   public getInteractionMode(): InteractionMode {
-    return this.state.interactionMode;
+    return this.state.interactionMode
   }
 
   /**
@@ -209,9 +211,9 @@ export class StateManager {
    */
   public setAutoRotating(value: boolean): void {
     if (this.state.isAutoRotating !== value) {
-      this.state.isAutoRotating = value;
-      this.recordStateChange({ isAutoRotating: value });
-      logger.debug(`Auto-rotating: ${value}`);
+      this.state.isAutoRotating = value
+      this.recordStateChange({ isAutoRotating: value })
+      logger.debug(`Auto-rotating: ${value}`)
     }
   }
 
@@ -219,7 +221,7 @@ export class StateManager {
    * 检查是否自动旋转
    */
   public isAutoRotating(): boolean {
-    return this.state.isAutoRotating;
+    return this.state.isAutoRotating
   }
 
   /**
@@ -227,9 +229,9 @@ export class StateManager {
    */
   public setFullscreen(value: boolean): void {
     if (this.state.isFullscreen !== value) {
-      this.state.isFullscreen = value;
-      this.recordStateChange({ isFullscreen: value });
-      logger.debug(`Fullscreen: ${value}`);
+      this.state.isFullscreen = value
+      this.recordStateChange({ isFullscreen: value })
+      logger.debug(`Fullscreen: ${value}`)
     }
   }
 
@@ -237,7 +239,7 @@ export class StateManager {
    * 检查是否全屏
    */
   public isFullscreen(): boolean {
-    return this.state.isFullscreen;
+    return this.state.isFullscreen
   }
 
   /**
@@ -245,13 +247,14 @@ export class StateManager {
    */
   public setDragging(value: boolean): void {
     if (this.state.isDragging !== value) {
-      this.state.isDragging = value;
-      this.recordStateChange({ isDragging: value });
+      this.state.isDragging = value
+      this.recordStateChange({ isDragging: value })
 
       if (value) {
-        this.eventBus.emit('interaction:dragstart', { x: 0, y: 0 });
-      } else {
-        this.eventBus.emit('interaction:dragend', { x: 0, y: 0 });
+        this.eventBus.emit('interaction:dragstart', { x: 0, y: 0 })
+      }
+      else {
+        this.eventBus.emit('interaction:dragend', { x: 0, y: 0 })
       }
     }
   }
@@ -260,7 +263,7 @@ export class StateManager {
    * 检查是否正在拖拽
    */
   public isDragging(): boolean {
-    return this.state.isDragging;
+    return this.state.isDragging
   }
 
   /**
@@ -268,9 +271,9 @@ export class StateManager {
    */
   public setTransitioning(value: boolean): void {
     if (this.state.isTransitioning !== value) {
-      this.state.isTransitioning = value;
-      this.recordStateChange({ isTransitioning: value });
-      logger.debug(`Transitioning: ${value}`);
+      this.state.isTransitioning = value
+      this.recordStateChange({ isTransitioning: value })
+      logger.debug(`Transitioning: ${value}`)
     }
   }
 
@@ -278,7 +281,7 @@ export class StateManager {
    * 检查是否正在过渡
    */
   public isTransitioning(): boolean {
-    return this.state.isTransitioning;
+    return this.state.isTransitioning
   }
 
   /**
@@ -286,10 +289,10 @@ export class StateManager {
    */
   public setQuality(quality: 'ultra' | 'high' | 'medium' | 'low'): void {
     if (this.state.quality !== quality) {
-      this.state.quality = quality;
-      this.recordStateChange({ quality });
-      this.eventBus.emit('quality:change', { preset: quality, settings: {} });
-      logger.info(`Quality changed to: ${quality}`);
+      this.state.quality = quality
+      this.recordStateChange({ quality })
+      this.eventBus.emit('quality:change', { preset: quality, settings: {} })
+      logger.info(`Quality changed to: ${quality}`)
     }
   }
 
@@ -297,7 +300,7 @@ export class StateManager {
    * 获取质量级别
    */
   public getQuality(): 'ultra' | 'high' | 'medium' | 'low' {
-    return this.state.quality;
+    return this.state.quality
   }
 
   /**
@@ -307,18 +310,18 @@ export class StateManager {
     this.stateHistory.push({
       state: changes,
       timestamp: Date.now(),
-    });
+    })
 
     if (this.stateHistory.length > this.maxHistorySize) {
-      this.stateHistory.shift();
+      this.stateHistory.shift()
     }
   }
 
   /**
    * 获取状态历史
    */
-  public getStateHistory(): Array<{ state: Partial<ViewerStateData>; timestamp: number }> {
-    return [...this.stateHistory];
+  public getStateHistory(): Array<{ state: Partial<ViewerStateData>, timestamp: number }> {
+    return [...this.stateHistory]
   }
 
   /**
@@ -335,18 +338,17 @@ export class StateManager {
       isDragging: false,
       isTransitioning: false,
       quality: 'high',
-    };
-    this.stateHistory = [];
-    logger.debug('State manager reset');
+    }
+    this.stateHistory = []
+    logger.debug('State manager reset')
   }
 
   /**
    * 销毁状态管理器
    */
   public dispose(): void {
-    this.setViewerState(ViewerState.DISPOSED);
-    this.state.controls.clear();
-    this.stateHistory = [];
+    this.setViewerState(ViewerState.DISPOSED)
+    this.state.controls.clear()
+    this.stateHistory = []
   }
 }
-

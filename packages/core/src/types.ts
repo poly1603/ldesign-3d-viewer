@@ -4,19 +4,19 @@
  */
 export interface Hotspot<T = Record<string, unknown>> {
   /** Unique identifier */
-  id: string;
+  id: string
   /** Position in spherical coordinates (theta: horizontal angle, phi: vertical angle) */
-  position: SphericalPosition;
+  position: SphericalPosition
   /** Text label */
-  label?: string;
+  label?: string
   /** Custom data with type safety */
-  data?: T;
+  data?: T
   /** Custom icon/element */
-  element?: HTMLElement;
+  element?: HTMLElement
   /** Hotspot type/category */
-  type?: string;
+  type?: string
   /** Is hotspot visible */
-  visible?: boolean;
+  visible?: boolean
 }
 
 /**
@@ -24,11 +24,11 @@ export interface Hotspot<T = Record<string, unknown>> {
  */
 export interface SphericalPosition {
   /** Horizontal angle in radians */
-  theta: number;
+  theta: number
   /** Vertical angle in radians */
-  phi: number;
+  phi: number
   /** Optional radius (default: sphere radius) */
-  radius?: number;
+  radius?: number
 }
 
 /**
@@ -36,98 +36,98 @@ export interface SphericalPosition {
  */
 export interface ViewLimits {
   /** Minimum horizontal angle in radians */
-  minTheta?: number;
+  minTheta?: number
   /** Maximum horizontal angle in radians */
-  maxTheta?: number;
+  maxTheta?: number
   /** Minimum vertical angle in radians */
-  minPhi?: number;
+  minPhi?: number
   /** Maximum vertical angle in radians */
-  maxPhi?: number;
+  maxPhi?: number
 }
 
 /**
  * Image format types
  */
-export type ImageFormat = 'equirectangular' | 'cubemap';
+export type ImageFormat = 'equirectangular' | 'cubemap'
 
 /**
  * Cubemap image sources
  */
 export interface CubemapImages {
-  px: string; // positive x
-  nx: string; // negative x
-  py: string; // positive y
-  ny: string; // negative y
-  pz: string; // positive z
-  nz: string; // negative z
+  px: string // positive x
+  nx: string // negative x
+  py: string // positive y
+  ny: string // negative y
+  pz: string // positive z
+  nz: string // negative z
 }
 
 /**
  * Loading progress callback
  */
-export type LoadingProgressCallback = (progress: number) => void;
+export type LoadingProgressCallback = (progress: number) => void
 
 /**
  * Options for initializing the PanoramaViewer
  */
 export interface ViewerOptions {
   /** The container element to render the viewer in */
-  container: HTMLElement;
+  container: HTMLElement
   /** URL or path to the panorama image */
-  image: string | CubemapImages;
+  image: string | CubemapImages
   /** Image format type (default: 'equirectangular') */
-  format?: ImageFormat;
+  format?: ImageFormat
   /** Field of view in degrees (default: 75) */
-  fov?: number;
+  fov?: number
   /** Minimum field of view for zoom (default: 30) */
-  minFov?: number;
+  minFov?: number
   /** Maximum field of view for zoom (default: 100) */
-  maxFov?: number;
+  maxFov?: number
   /** Enable auto rotation (default: false) */
-  autoRotate?: boolean;
+  autoRotate?: boolean
   /** Auto rotation speed (default: 0.5) */
-  autoRotateSpeed?: number;
+  autoRotateSpeed?: number
   /** Enable gyroscope controls on mobile (default: true) */
-  gyroscope?: boolean;
+  gyroscope?: boolean
   /** Enable damping/inertia for smooth movement (default: true) */
-  enableDamping?: boolean;
+  enableDamping?: boolean
   /** Damping factor (default: 0.05) */
-  dampingFactor?: number;
+  dampingFactor?: number
   /** View limits for restricting camera movement */
-  viewLimits?: ViewLimits;
+  viewLimits?: ViewLimits | null
   /** Enable keyboard controls (default: true) */
-  keyboardControls?: boolean;
+  keyboardControls?: boolean
   /** Loading progress callback */
-  onProgress?: LoadingProgressCallback;
+  onProgress?: LoadingProgressCallback
   /** Enable render on demand for better performance (default: true) */
-  renderOnDemand?: boolean;
+  renderOnDemand?: boolean
   /** Maximum texture size (default: 4096) */
-  maxTextureSize?: number;
+  maxTextureSize?: number
   /** Enable performance monitoring (default: false) */
-  enablePerformanceMonitor?: boolean;
+  enablePerformanceMonitor?: boolean
   /** Show performance stats overlay (default: false) */
-  showPerformanceStats?: boolean;
+  showPerformanceStats?: boolean
   /** Enable adaptive quality (default: false) */
-  enableAdaptiveQuality?: boolean;
+  enableAdaptiveQuality?: boolean
   /** Initial quality preset (default: 'high') */
-  qualityPreset?: 'ultra' | 'high' | 'medium' | 'low';
+  qualityPreset?: 'ultra' | 'high' | 'medium' | 'low'
   /** Enable WebWorker texture loading (default: true) */
-  useWebWorker?: boolean;
+  useWebWorker?: boolean
   /** Enable advanced gesture recognition (default: false) */
-  advancedGestures?: boolean;
+  advancedGestures?: boolean
   /** Enable GPU instanced hotspots (default: true) */
-  useGPUInstancing?: boolean;
+  useGPUInstancing?: boolean
   /** Images to preload in background */
-  preloadImages?: string[];
+  preloadImages?: string[]
 }
 
 /**
  * Event types emitted by the viewer
  */
 export interface ViewerEvents {
-  ready: void;
-  error: Error;
-  change: void;
+  ready: void
+  error: Error
+  change: void
 }
 
 /**
@@ -136,122 +136,122 @@ export interface ViewerEvents {
 export interface IPanoramaViewer {
   // Image and scene control
   /** Load a new panorama image */
-  loadImage(url: string | CubemapImages, transition?: boolean): Promise<void>;
+  loadImage: (url: string | CubemapImages, transition?: boolean) => Promise<void>
   /** Preload images for faster switching */
-  preloadImages(urls: string[]): Promise<void>;
+  preloadImages: (urls: string[]) => Promise<void>
 
   // Camera control
   /** Reset camera to initial position */
-  reset(): void;
+  reset: () => void
   /** Get the current camera rotation */
-  getRotation(): { x: number; y: number; z: number };
+  getRotation: () => { x: number, y: number, z: number }
   /** Set the camera rotation */
-  setRotation(x: number, y: number, z: number): void;
+  setRotation: (x: number, y: number, z: number) => void
   /** Animate camera along path */
-  animateCameraPath(path: CameraPathPoint[]): void;
+  animateCameraPath: (path: CameraPathPoint[]) => void
 
   // Auto rotation
   /** Enable auto rotation */
-  enableAutoRotate(): void;
+  enableAutoRotate: () => void
   /** Disable auto rotation */
-  disableAutoRotate(): void;
+  disableAutoRotate: () => void
 
   // Gyroscope
   /** Enable gyroscope controls (mobile only) */
-  enableGyroscope(): Promise<boolean>;
+  enableGyroscope: () => Promise<boolean>
   /** Disable gyroscope controls */
-  disableGyroscope(): void;
+  disableGyroscope: () => void
 
   // Hotspots
   /** Add a hotspot marker */
-  addHotspot(hotspot: Hotspot): void;
+  addHotspot: (hotspot: Hotspot) => void
   /** Remove a hotspot by ID */
-  removeHotspot(id: string): void;
+  removeHotspot: (id: string) => void
   /** Get all hotspots */
-  getHotspots(): Hotspot[];
+  getHotspots: () => Hotspot[]
 
   // Fullscreen
   /** Enter fullscreen mode */
-  enterFullscreen(): Promise<void>;
+  enterFullscreen: () => Promise<void>
   /** Exit fullscreen mode */
-  exitFullscreen(): void;
+  exitFullscreen: () => void
   /** Check if in fullscreen */
-  isFullscreen(): boolean;
+  isFullscreen: () => boolean
 
   // Screenshot
   /** Take a screenshot */
-  screenshot(width?: number, height?: number): string;
+  screenshot: (width?: number, height?: number) => string
 
   // View limits
   /** Set view limits */
-  setViewLimits(limits: ViewLimits | null): void;
+  setViewLimits: (limits?: ViewLimits | null) => void
 
   // Mini map
   /** Show mini map */
-  showMiniMap(): void;
+  showMiniMap: () => void
   /** Hide mini map */
-  hideMiniMap(): void;
+  hideMiniMap: () => void
   /** Toggle mini map visibility */
-  toggleMiniMap(): void;
+  toggleMiniMap: () => void
 
   // Color adjustment
   /** Set brightness (-1 to 1) */
-  setBrightness(value: number): void;
+  setBrightness: (value: number) => void
   /** Set contrast (-1 to 1) */
-  setContrast(value: number): void;
+  setContrast: (value: number) => void
   /** Set saturation (-1 to 1) */
-  setSaturation(value: number): void;
+  setSaturation: (value: number) => void
   /** Set exposure (-2 to 2) */
-  setExposure(value: number): void;
+  setExposure: (value: number) => void
   /** Reset color adjustments */
-  resetColorAdjustments(): void;
+  resetColorAdjustments: () => void
 
   // Watermark
   /** Show watermark */
-  showWatermark(options?: WatermarkOptions): void;
+  showWatermark: (options?: WatermarkOptions) => void
   /** Hide watermark */
-  hideWatermark(): void;
+  hideWatermark: () => void
 
   // Performance
   /** Get performance stats */
-  getPerformanceStats(): PerformanceStats | null;
+  getPerformanceStats: () => PerformanceStats | null
   /** Show/hide performance overlay */
-  togglePerformanceOverlay(): void;
+  togglePerformanceOverlay: () => void
   /** Set quality preset */
-  setQualityPreset(preset: QualityPreset): void;
+  setQualityPreset: (preset: QualityPreset) => void
 
   // Rendering
   /** Force render (useful when renderOnDemand is enabled) */
-  render(): void;
+  render: () => void
 
   // Cleanup
   /** Destroy the viewer and clean up resources */
-  dispose(): void;
+  dispose: () => void
 }
 
 /**
  * Quality preset levels
  */
-export type QualityPreset = 'ultra' | 'high' | 'medium' | 'low';
+export type QualityPreset = 'ultra' | 'high' | 'medium' | 'low'
 
 /**
  * Performance statistics
  */
 export interface PerformanceStats {
   /** Frames per second */
-  fps: number;
+  fps: number
   /** Frame time in milliseconds */
-  frameTime: number;
+  frameTime: number
   /** Number of render calls */
-  renderCalls: number;
+  renderCalls: number
   /** Number of triangles */
-  triangles: number;
+  triangles: number
   /** Memory statistics (if available) */
   memory?: {
-    usedJSHeapSize: number;
-    totalJSHeapSize: number;
-    jsHeapSizeLimit: number;
-  };
+    usedJSHeapSize: number
+    totalJSHeapSize: number
+    jsHeapSizeLimit: number
+  }
 }
 
 /**
@@ -259,17 +259,17 @@ export interface PerformanceStats {
  */
 export interface WatermarkOptions {
   /** Watermark text */
-  text?: string;
+  text?: string
   /** Watermark image URL */
-  imageUrl?: string;
+  imageUrl?: string
   /** Position */
-  position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'center';
+  position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'center'
   /** Opacity (0-1) */
-  opacity?: number;
+  opacity?: number
   /** Size */
-  size?: number;
+  size?: number
   /** Custom CSS */
-  style?: Partial<CSSStyleDeclaration>;
+  style?: Partial<CSSStyleDeclaration>
 }
 
 /**
@@ -277,13 +277,13 @@ export interface WatermarkOptions {
  */
 export interface CameraPathPoint {
   /** Camera position */
-  position: { x: number; y: number; z: number };
+  position: { x: number, y: number, z: number }
   /** Camera rotation */
-  rotation: { x: number; y: number; z: number };
+  rotation: { x: number, y: number, z: number }
   /** Field of view */
-  fov?: number;
+  fov?: number
   /** Duration to this point (ms) */
-  duration?: number;
+  duration?: number
 }
 
 /**
@@ -291,11 +291,11 @@ export interface CameraPathPoint {
  */
 export interface RotationCoordinates {
   /** X rotation in radians */
-  x: number;
+  x: number
   /** Y rotation in radians */
-  y: number;
+  y: number
   /** Z rotation in radians */
-  z: number;
+  z: number
 }
 
 /**
@@ -303,11 +303,11 @@ export interface RotationCoordinates {
  */
 export interface PositionCoordinates {
   /** X position */
-  x: number;
+  x: number
   /** Y position */
-  y: number;
+  y: number
   /** Z position */
-  z: number;
+  z: number
 }
 
 /**
@@ -315,9 +315,9 @@ export interface PositionCoordinates {
  */
 export interface Dimensions {
   /** Width */
-  width: number;
+  width: number
   /** Height */
-  height: number;
+  height: number
 }
 
 /**
@@ -325,14 +325,13 @@ export interface Dimensions {
  */
 export interface TextureInfo {
   /** Texture URL */
-  url: string;
+  url: string
   /** Width in pixels */
-  width: number;
+  width: number
   /** Height in pixels */
-  height: number;
+  height: number
   /** Size in bytes */
-  size: number;
+  size: number
   /** Format */
-  format: string;
+  format: string
 }
-

@@ -3,38 +3,38 @@
  * 支持 HDR 纹理、Tone Mapping 和高级色彩处理
  */
 
-import * as THREE from 'three';
-import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
-import { logger } from '../core/Logger';
+import * as THREE from 'three'
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
+import { logger } from '../core/Logger'
 
-export type ToneMappingType = 'none' | 'linear' | 'reinhard' | 'cineon' | 'aces' | 'custom';
+export type ToneMappingType = 'none' | 'linear' | 'reinhard' | 'cineon' | 'aces' | 'custom'
 
 export interface HDROptions {
   /** Tone mapping 类型 */
-  toneMapping?: ToneMappingType;
+  toneMapping?: ToneMappingType
   /** 曝光度 */
-  exposure?: number;
+  exposure?: number
   /** 白点 */
-  whitePoint?: number;
+  whitePoint?: number
   /** 启用 Bloom 效果 */
-  enableBloom?: boolean;
+  enableBloom?: boolean
   /** Bloom 强度 */
-  bloomStrength?: number;
+  bloomStrength?: number
   /** Bloom 半径 */
-  bloomRadius?: number;
+  bloomRadius?: number
   /** Bloom 阈值 */
-  bloomThreshold?: number;
+  bloomThreshold?: number
 }
 
 export class HDRRenderer {
-  private renderer: THREE.WebGLRenderer;
-  private scene: THREE.Scene;
-  private options: Required<HDROptions>;
-  private rgbeLoader: RGBELoader;
+  private renderer: THREE.WebGLRenderer
+  private scene: THREE.Scene
+  private options: Required<HDROptions>
+  private rgbeLoader: RGBELoader
 
   constructor(renderer: THREE.WebGLRenderer, scene: THREE.Scene, options: HDROptions = {}) {
-    this.renderer = renderer;
-    this.scene = scene;
+    this.renderer = renderer
+    this.scene = scene
 
     this.options = {
       toneMapping: options.toneMapping ?? 'aces',
@@ -44,10 +44,10 @@ export class HDRRenderer {
       bloomStrength: options.bloomStrength ?? 1.5,
       bloomRadius: options.bloomRadius ?? 0.4,
       bloomThreshold: options.bloomThreshold ?? 0.85,
-    };
+    }
 
-    this.rgbeLoader = new RGBELoader();
-    this.applyToneMapping();
+    this.rgbeLoader = new RGBELoader()
+    this.applyToneMapping()
   }
 
   /**
@@ -59,19 +59,19 @@ export class HDRRenderer {
         url,
         (texture) => {
           // 配置 HDR 纹理
-          texture.mapping = THREE.EquirectangularReflectionMapping;
-          texture.colorSpace = THREE.LinearSRGBColorSpace;
+          texture.mapping = THREE.EquirectangularReflectionMapping
+          texture.colorSpace = THREE.LinearSRGBColorSpace
 
-          logger.info(`HDR texture loaded: ${url}`);
-          resolve(texture);
+          logger.info(`HDR texture loaded: ${url}`)
+          resolve(texture)
         },
         undefined,
         (error) => {
-          logger.error(`Failed to load HDR texture: ${url}`, error);
-          reject(error);
-        }
-      );
-    });
+          logger.error(`Failed to load HDR texture: ${url}`, error)
+          reject(error)
+        },
+      )
+    })
   }
 
   /**
@@ -80,50 +80,50 @@ export class HDRRenderer {
   private applyToneMapping(): void {
     switch (this.options.toneMapping) {
       case 'none':
-        this.renderer.toneMapping = THREE.NoToneMapping;
-        break;
+        this.renderer.toneMapping = THREE.NoToneMapping
+        break
       case 'linear':
-        this.renderer.toneMapping = THREE.LinearToneMapping;
-        break;
+        this.renderer.toneMapping = THREE.LinearToneMapping
+        break
       case 'reinhard':
-        this.renderer.toneMapping = THREE.ReinhardToneMapping;
-        break;
+        this.renderer.toneMapping = THREE.ReinhardToneMapping
+        break
       case 'cineon':
-        this.renderer.toneMapping = THREE.CineonToneMapping;
-        break;
+        this.renderer.toneMapping = THREE.CineonToneMapping
+        break
       case 'aces':
-        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        break;
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping
+        break
       case 'custom':
-        this.renderer.toneMapping = THREE.CustomToneMapping;
-        break;
+        this.renderer.toneMapping = THREE.CustomToneMapping
+        break
     }
 
-    this.renderer.toneMappingExposure = this.options.exposure;
-    logger.debug(`Tone mapping applied: ${this.options.toneMapping}`);
+    this.renderer.toneMappingExposure = this.options.exposure
+    logger.debug(`Tone mapping applied: ${this.options.toneMapping}`)
   }
 
   /**
    * 设置 Tone Mapping 类型
    */
   public setToneMapping(type: ToneMappingType): void {
-    this.options.toneMapping = type;
-    this.applyToneMapping();
+    this.options.toneMapping = type
+    this.applyToneMapping()
   }
 
   /**
    * 设置曝光度
    */
   public setExposure(exposure: number): void {
-    this.options.exposure = exposure;
-    this.renderer.toneMappingExposure = exposure;
+    this.options.exposure = exposure
+    this.renderer.toneMappingExposure = exposure
   }
 
   /**
    * 获取当前曝光度
    */
   public getExposure(): number {
-    return this.options.exposure;
+    return this.options.exposure
   }
 
   /**
@@ -150,61 +150,61 @@ export class HDRRenderer {
         
         return color;
       }
-    `;
+    `
   }
 
   /**
    * 应用 HDR 环境贴图
    */
   public applyEnvironmentMap(texture: THREE.Texture): void {
-    this.scene.environment = texture;
-    this.scene.background = texture;
-    logger.debug('HDR environment map applied');
+    this.scene.environment = texture
+    this.scene.background = texture
+    logger.debug('HDR environment map applied')
   }
 
   /**
    * 移除环境贴图
    */
   public removeEnvironmentMap(): void {
-    this.scene.environment = null;
-    this.scene.background = null;
+    this.scene.environment = null
+    this.scene.background = null
   }
 
   /**
    * 创建 PBR 材质（用于 HDR 环境）
    */
   public static createPBRMaterial(options: {
-    color?: THREE.ColorRepresentation;
-    metalness?: number;
-    roughness?: number;
-    envMapIntensity?: number;
+    color?: THREE.ColorRepresentation
+    metalness?: number
+    roughness?: number
+    envMapIntensity?: number
   } = {}): THREE.MeshStandardMaterial {
     return new THREE.MeshStandardMaterial({
-      color: options.color ?? 0xffffff,
+      color: options.color ?? 0xFFFFFF,
       metalness: options.metalness ?? 0.5,
       roughness: options.roughness ?? 0.5,
       envMapIntensity: options.envMapIntensity ?? 1.0,
-    });
+    })
   }
 
   /**
    * 获取选项
    */
   public getOptions(): Readonly<Required<HDROptions>> {
-    return { ...this.options };
+    return { ...this.options }
   }
 
   /**
    * 更新选项
    */
   public updateOptions(options: Partial<HDROptions>): void {
-    Object.assign(this.options, options);
+    Object.assign(this.options, options)
 
     if (options.toneMapping) {
-      this.applyToneMapping();
+      this.applyToneMapping()
     }
     if (options.exposure !== undefined) {
-      this.setExposure(options.exposure);
+      this.setExposure(options.exposure)
     }
   }
 
@@ -212,8 +212,8 @@ export class HDRRenderer {
    * 销毁
    */
   public dispose(): void {
-    this.removeEnvironmentMap();
-    logger.debug('HDR renderer disposed');
+    this.removeEnvironmentMap()
+    logger.debug('HDR renderer disposed')
   }
 }
 
@@ -221,7 +221,7 @@ export class HDRRenderer {
  * 色彩分级（Color Grading）
  */
 export class ColorGrading {
-  private material: THREE.ShaderMaterial | null = null;
+  private material: THREE.ShaderMaterial | null = null
 
   constructor() { }
 
@@ -229,12 +229,12 @@ export class ColorGrading {
    * 创建色彩分级着色器材质
    */
   public createMaterial(options: {
-    brightness?: number;
-    contrast?: number;
-    saturation?: number;
-    hue?: number;
-    temperature?: number; // 色温
-    tint?: number; // 色调
+    brightness?: number
+    contrast?: number
+    saturation?: number
+    hue?: number
+    temperature?: number // 色温
+    tint?: number // 色调
   } = {}): THREE.ShaderMaterial {
     const uniforms = {
       tDiffuse: { value: null },
@@ -244,15 +244,15 @@ export class ColorGrading {
       hue: { value: options.hue ?? 0.0 },
       temperature: { value: options.temperature ?? 0.0 },
       tint: { value: options.tint ?? 0.0 },
-    };
+    }
 
     this.material = new THREE.ShaderMaterial({
       uniforms,
       vertexShader: this.getVertexShader(),
       fragmentShader: this.getFragmentShader(),
-    });
+    })
 
-    return this.material;
+    return this.material
   }
 
   /**
@@ -265,7 +265,7 @@ export class ColorGrading {
         vUv = uv;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }
-    `;
+    `
   }
 
   /**
@@ -322,7 +322,7 @@ export class ColorGrading {
         
         gl_FragColor = vec4(clamp(color.rgb, 0.0, 1.0), color.a);
       }
-    `;
+    `
   }
 
   /**
@@ -330,7 +330,7 @@ export class ColorGrading {
    */
   public updateParameter(name: string, value: number): void {
     if (this.material && this.material.uniforms[name]) {
-      this.material.uniforms[name].value = value;
+      this.material.uniforms[name].value = value
     }
   }
 
@@ -339,9 +339,8 @@ export class ColorGrading {
    */
   public dispose(): void {
     if (this.material) {
-      this.material.dispose();
-      this.material = null;
+      this.material.dispose()
+      this.material = null
     }
   }
 }
-

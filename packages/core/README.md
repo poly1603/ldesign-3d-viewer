@@ -11,26 +11,26 @@ npm install @panorama-viewer/core three
 ## Usage
 
 ```javascript
-import { PanoramaViewer } from '@panorama-viewer/core';
+import { PanoramaViewer } from '@panorama-viewer/core'
 
 const viewer = new PanoramaViewer({
   container: document.getElementById('viewer'),
   image: 'path/to/panorama.jpg',
   fov: 75,
   autoRotate: true,
-});
+})
 
 // Load a new image
-await viewer.loadImage('path/to/new-panorama.jpg');
+await viewer.loadImage('path/to/new-panorama.jpg')
 
 // Reset view
-viewer.reset();
+viewer.reset()
 
 // Enable gyroscope (mobile)
-await viewer.enableGyroscope();
+await viewer.enableGyroscope()
 
 // Cleanup
-viewer.dispose();
+viewer.dispose()
 ```
 
 ## API
@@ -39,16 +39,16 @@ viewer.dispose();
 
 ```typescript
 interface ViewerOptions {
-  container: HTMLElement;        // Required: Container element
-  image: string;                 // Required: Panorama image URL
-  fov?: number;                  // Field of view (default: 75)
-  minFov?: number;               // Min FOV for zoom (default: 30)
-  maxFov?: number;               // Max FOV for zoom (default: 100)
-  autoRotate?: boolean;          // Enable auto rotation (default: false)
-  autoRotateSpeed?: number;      // Rotation speed (default: 0.5)
-  gyroscope?: boolean;           // Enable gyroscope (default: true)
-  enableDamping?: boolean;       // Enable inertia (default: true)
-  dampingFactor?: number;        // Damping factor (default: 0.05)
+  container: HTMLElement // Required: Container element
+  image: string // Required: Panorama image URL
+  fov?: number // Field of view (default: 75)
+  minFov?: number // Min FOV for zoom (default: 30)
+  maxFov?: number // Max FOV for zoom (default: 100)
+  autoRotate?: boolean // Enable auto rotation (default: false)
+  autoRotateSpeed?: number // Rotation speed (default: 0.5)
+  gyroscope?: boolean // Enable gyroscope (default: true)
+  enableDamping?: boolean // Enable inertia (default: true)
+  dampingFactor?: number // Damping factor (default: 0.05)
 }
 ```
 
@@ -67,5 +67,3 @@ interface ViewerOptions {
 ## License
 
 MIT
-
-

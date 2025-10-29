@@ -4,72 +4,73 @@
  */
 
 export interface PreloadOptions {
-  priority?: 'high' | 'medium' | 'low';
-  timeout?: number;
-  crossOrigin?: 'anonymous' | 'use-credentials';
-  type?: 'image' | 'video' | 'audio' | 'font' | 'script' | 'style';
+  priority?: 'high' | 'medium' | 'low'
+  timeout?: number
+  crossOrigin?: 'anonymous' | 'use-credentials'
+  type?: 'image' | 'video' | 'audio' | 'font' | 'script' | 'style'
 }
 
 export interface PreloadTask {
-  url: string;
-  options: Required<PreloadOptions>;
-  promise: Promise<void>;
-  status: 'pending' | 'loading' | 'loaded' | 'error';
-  startTime?: number;
-  endTime?: number;
+  url: string
+  options: Required<PreloadOptions>
+  promise: Promise<void>
+  status: 'pending' | 'loading' | 'loaded' | 'error'
+  startTime?: number
+  endTime?: number
 }
 
 export class ResourcePreloader {
-  private static instance: ResourcePreloader;
-  private tasks: Map<string, PreloadTask> = new Map();
-  private queue: PreloadTask[] = [];
-  private concurrent = 3; // 同时预加载的资源数
-  private loading = 0;
+  private static instance: ResourcePreloader
+  private tasks: Map<string, PreloadTask> = new Map()
+  private queue: PreloadTask[] = []
+  private concurrent = 3 // 同时预加载的资源数
+  private loading = 0
 
   private constructor() {
-    this.initDNSPrefetch();
+    this.initDNSPrefetch()
   }
 
   public static getInstance(): ResourcePreloader {
     if (!ResourcePreloader.instance) {
-      ResourcePreloader.instance = new ResourcePreloader();
+      ResourcePreloader.instance = new ResourcePreloader()
     }
-    return ResourcePreloader.instance;
+    return ResourcePreloader.instance
   }
 
   /**
    * 初始化 DNS 预解析
    */
   private initDNSPrefetch(): void {
-    const domains = this.extractDomains();
-    domains.forEach(domain => {
-      this.addDNSPrefetch(domain);
-    });
+    const domains = this.extractDomains()
+    domains.forEach((domain) => {
+      this.addDNSPrefetch(domain)
+    })
   }
 
   /**
    * 从现有资源中提取域名
    */
   private extractDomains(): string[] {
-    const domains = new Set<string>();
+    const domains = new Set<string>()
 
     // 从 img、script、link 标签中提取域名
-    const elements = document.querySelectorAll('img, script, link');
+    const elements = document.querySelectorAll('img, script, link')
     elements.forEach((el) => {
-      const src = el.getAttribute('src') || el.getAttribute('href');
+      const src = el.getAttribute('src') || el.getAttribute('href')
       if (src) {
         try {
-          const url = new URL(src, window.location.href);
+          const url = new URL(src, window.location.href)
           if (url.hostname !== window.location.hostname) {
-            domains.add(url.hostname);
+            domains.add(url.hostname)
           }
-        } catch (e) {
+        }
+        catch {
           // 忽略无效 URL
         }
       }
-    });
+    })
 
-    return Array.from(domains);
+    return Array.from(domains)
   }
 
   /**
@@ -77,13 +78,13 @@ export class ResourcePreloader {
    */
   public addDNSPrefetch(domain: string): void {
     if (document.head.querySelector(`link[rel="dns-prefetch"][href="//${domain}"]`)) {
-      return;
+      return
     }
 
-    const link = document.createElement('link');
-    link.rel = 'dns-prefetch';
-    link.href = `//${domain}`;
-    document.head.appendChild(link);
+    const link = document.createElement('link')
+    link.rel = 'dns-prefetch'
+    link.href = `//${domain}`
+    document.head.appendChild(link)
   }
 
   /**
@@ -91,16 +92,16 @@ export class ResourcePreloader {
    */
   public addPreconnect(domain: string, crossOrigin: boolean = false): void {
     if (document.head.querySelector(`link[rel="preconnect"][href="//${domain}"]`)) {
-      return;
+      return
     }
 
-    const link = document.createElement('link');
-    link.rel = 'preconnect';
-    link.href = `//${domain}`;
+    const link = document.createElement('link')
+    link.rel = 'preconnect'
+    link.href = `//${domain}`
     if (crossOrigin) {
-      link.crossOrigin = 'anonymous';
+      link.crossOrigin = 'anonymous'
     }
-    document.head.appendChild(link);
+    document.head.appendChild(link)
   }
 
   /**
@@ -109,7 +110,7 @@ export class ResourcePreloader {
   public preload(url: string, options: PreloadOptions = {}): Promise<void> {
     // 如果已经在队列中，返回现有 promise
     if (this.tasks.has(url)) {
-      return this.tasks.get(url)!.promise;
+      return this.tasks.get(url)!.promise
     }
 
     const fullOptions: Required<PreloadOptions> = {
@@ -117,54 +118,54 @@ export class ResourcePreloader {
       timeout: options.timeout || 30000,
       crossOrigin: options.crossOrigin || 'anonymous',
       type: options.type || this.detectType(url),
-    };
+    }
 
     const task: PreloadTask = {
       url,
       options: fullOptions,
       promise: Promise.resolve(),
       status: 'pending',
-    };
+    }
 
     // 创建加载 promise
     task.promise = new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
-        task.status = 'error';
-        reject(new Error(`Preload timeout for ${url}`));
-      }, fullOptions.timeout);
+        task.status = 'error'
+        reject(new Error(`Preload timeout for ${url}`))
+      }, fullOptions.timeout)
 
       this.loadResource(url, fullOptions)
         .then(() => {
-          clearTimeout(timeoutId);
-          task.status = 'loaded';
-          task.endTime = performance.now();
-          resolve();
+          clearTimeout(timeoutId)
+          task.status = 'loaded'
+          task.endTime = performance.now()
+          resolve()
         })
         .catch((error) => {
-          clearTimeout(timeoutId);
-          task.status = 'error';
-          task.endTime = performance.now();
-          reject(error);
-        });
-    });
+          clearTimeout(timeoutId)
+          task.status = 'error'
+          task.endTime = performance.now()
+          reject(error)
+        })
+    })
 
-    this.tasks.set(url, task);
-    this.queue.push(task);
+    this.tasks.set(url, task)
+    this.queue.push(task)
 
     // 按优先级排序
-    this.sortQueue();
+    this.sortQueue()
 
     // 开始处理队列
-    this.processQueue();
+    this.processQueue()
 
-    return task.promise;
+    return task.promise
   }
 
   /**
    * 批量预加载
    */
   public preloadBatch(urls: string[], options: PreloadOptions = {}): Promise<void[]> {
-    return Promise.all(urls.map(url => this.preload(url, options)));
+    return Promise.all(urls.map(url => this.preload(url, options)))
   }
 
   /**
@@ -174,13 +175,13 @@ export class ResourcePreloader {
   public predictivePreload(
     currentUrl: string,
     relatedUrls: string[],
-    cameraDirection?: { theta: number; phi: number }
+    cameraDirection?: { theta: number, phi: number },
   ): void {
     // 根据相机方向计算优先级
     relatedUrls.forEach((url, index) => {
-      const priority = this.calculatePriority(index, relatedUrls.length, cameraDirection);
-      this.preload(url, { priority });
-    });
+      const priority = this.calculatePriority(index, relatedUrls.length, cameraDirection)
+      this.preload(url, { priority })
+    })
   }
 
   /**
@@ -189,21 +190,23 @@ export class ResourcePreloader {
   private calculatePriority(
     index: number,
     total: number,
-    cameraDirection?: { theta: number; phi: number }
+    _cameraDirection?: { theta: number, phi: number },
   ): 'high' | 'medium' | 'low' {
     // 简单策略：前1/3高优先级，中间1/3中优先级，后1/3低优先级
-    const ratio = index / total;
+    const ratio = index / total
 
-    if (ratio < 0.33) return 'high';
-    if (ratio < 0.66) return 'medium';
-    return 'low';
+    if (ratio < 0.33)
+      return 'high'
+    if (ratio < 0.66)
+      return 'medium'
+    return 'low'
   }
 
   /**
    * 检测资源类型
    */
   private detectType(url: string): PreloadOptions['type'] {
-    const ext = url.split('.').pop()?.toLowerCase();
+    const ext = url.split('.').pop()?.toLowerCase()
 
     switch (ext) {
       case 'jpg':
@@ -212,26 +215,25 @@ export class ResourcePreloader {
       case 'webp':
       case 'avif':
       case 'gif':
-        return 'image';
+        return 'image'
       case 'mp4':
       case 'webm':
       case 'ogg':
-        return 'video';
+        return 'video'
       case 'mp3':
       case 'wav':
-      case 'ogg':
-        return 'audio';
+        return 'audio'
       case 'woff':
       case 'woff2':
       case 'ttf':
       case 'otf':
-        return 'font';
+        return 'font'
       case 'js':
-        return 'script';
+        return 'script'
       case 'css':
-        return 'style';
+        return 'style'
       default:
-        return 'script';
+        return 'script'
     }
   }
 
@@ -240,31 +242,31 @@ export class ResourcePreloader {
    */
   private async loadResource(url: string, options: Required<PreloadOptions>): Promise<void> {
     // 使用 <link rel="preload">
-    const link = document.createElement('link');
-    link.rel = 'preload';
-    link.href = url;
-    link.as = options.type === 'script' ? 'script' : options.type === 'style' ? 'style' : 'fetch';
+    const link = document.createElement('link')
+    link.rel = 'preload'
+    link.href = url
+    link.as = options.type === 'script' ? 'script' : options.type === 'style' ? 'style' : 'fetch'
 
     if (options.crossOrigin) {
-      link.crossOrigin = options.crossOrigin;
+      link.crossOrigin = options.crossOrigin
     }
 
     return new Promise((resolve, reject) => {
-      link.onload = () => resolve();
-      link.onerror = () => reject(new Error(`Failed to preload ${url}`));
-      document.head.appendChild(link);
-    });
+      link.onload = () => resolve()
+      link.onerror = () => reject(new Error(`Failed to preload ${url}`))
+      document.head.appendChild(link)
+    })
   }
 
   /**
    * 排序队列（按优先级）
    */
   private sortQueue(): void {
-    const priorityMap = { high: 0, medium: 1, low: 2 };
+    const priorityMap = { high: 0, medium: 1, low: 2 }
 
     this.queue.sort((a, b) => {
-      return priorityMap[a.options.priority] - priorityMap[b.options.priority];
-    });
+      return priorityMap[a.options.priority] - priorityMap[b.options.priority]
+    })
   }
 
   /**
@@ -272,18 +274,19 @@ export class ResourcePreloader {
    */
   private processQueue(): void {
     while (this.loading < this.concurrent && this.queue.length > 0) {
-      const task = this.queue.shift();
-      if (!task) break;
+      const task = this.queue.shift()
+      if (!task)
+        break
 
       if (task.status === 'pending') {
-        task.status = 'loading';
-        task.startTime = performance.now();
-        this.loading++;
+        task.status = 'loading'
+        task.startTime = performance.now()
+        this.loading++
 
         task.promise.finally(() => {
-          this.loading--;
-          this.processQueue();
-        });
+          this.loading--
+          this.processQueue()
+        })
       }
     }
   }
@@ -292,12 +295,12 @@ export class ResourcePreloader {
    * 获取预加载统计
    */
   public getStats(): {
-    total: number;
-    pending: number;
-    loading: number;
-    loaded: number;
-    error: number;
-    averageTime: number;
+    total: number
+    pending: number
+    loading: number
+    loaded: number
+    error: number
+    averageTime: number
   } {
     const stats = {
       total: this.tasks.size,
@@ -306,25 +309,25 @@ export class ResourcePreloader {
       loaded: 0,
       error: 0,
       averageTime: 0,
-    };
-
-    let totalTime = 0;
-    let completedCount = 0;
-
-    this.tasks.forEach(task => {
-      stats[task.status]++;
-
-      if (task.startTime && task.endTime) {
-        totalTime += task.endTime - task.startTime;
-        completedCount++;
-      }
-    });
-
-    if (completedCount > 0) {
-      stats.averageTime = totalTime / completedCount;
     }
 
-    return stats;
+    let totalTime = 0
+    let completedCount = 0
+
+    this.tasks.forEach((task) => {
+      stats[task.status]++
+
+      if (task.startTime && task.endTime) {
+        totalTime += task.endTime - task.startTime
+        completedCount++
+      }
+    })
+
+    if (completedCount > 0) {
+      stats.averageTime = totalTime / completedCount
+    }
+
+    return stats
   }
 
   /**
@@ -333,25 +336,25 @@ export class ResourcePreloader {
   public cleanup(): void {
     this.tasks.forEach((task, url) => {
       if (task.status === 'loaded' || task.status === 'error') {
-        this.tasks.delete(url);
+        this.tasks.delete(url)
       }
-    });
+    })
   }
 
   /**
    * 取消所有预加载
    */
   public cancelAll(): void {
-    this.queue = [];
-    this.tasks.clear();
-    this.loading = 0;
+    this.queue = []
+    this.tasks.clear()
+    this.loading = 0
   }
 
   /**
    * 设置并发数
    */
   public setConcurrency(count: number): void {
-    this.concurrent = Math.max(1, Math.min(count, 10));
+    this.concurrent = Math.max(1, Math.min(count, 10))
   }
 
   /**
@@ -359,10 +362,9 @@ export class ResourcePreloader {
    * 应在应用启动时调用
    */
   public warmup(criticalUrls: string[]): Promise<void[]> {
-    return this.preloadBatch(criticalUrls, { priority: 'high' });
+    return this.preloadBatch(criticalUrls, { priority: 'high' })
   }
 }
 
 // 导出单例
-export const resourcePreloader = ResourcePreloader.getInstance();
-
+export const resourcePreloader = ResourcePreloader.getInstance()

@@ -1,58 +1,30 @@
-<template>
-  <div ref="containerRef" class="panorama-viewer" :style="containerStyle">
-    <!-- 默认插槽 - 用于自定义UI叠加层 -->
-    <slot></slot>
-    
-    <!-- 加载插槽 -->
-    <slot v-if="isLoading" name="loading" :progress="loadingProgress">
-      <div class="default-loading">
-        <div class="loading-spinner"></div>
-        <div class="loading-text">{{ loadingProgress.toFixed(0) }}%</div>
-      </div>
-    </slot>
-    
-    <!-- 错误插槽 -->
-    <slot v-if="error" name="error" :error="error">
-      <div class="default-error">
-        <p>{{ error.message }}</p>
-      </div>
-    </slot>
-    
-    <!-- 控制器插槽 -->
-    <slot name="controls" :viewer="viewerInstance" :methods="exposedMethods"></slot>
-    
-    <!-- 信息插槽 -->
-    <slot name="info" :stats="performanceStats"></slot>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch, computed, provide, reactive, toRefs } from 'vue';
-import { 
+import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue'
+import {
   PanoramaViewer as CoreViewer,
-  EventBus,
-  type ViewerOptions, 
-  type Hotspot, 
-  type ViewLimits, 
   type CubemapImages,
-  type PerformanceStats 
-} from '@panorama-viewer/core';
+  EventBus,
+  type Hotspot,
+  type PerformanceStats,
+  type ViewLimits,
+  type ViewerOptions,
+} from '@panorama-viewer/core'
 
 export interface PanoramaViewerProps {
-  image: string | CubemapImages;
-  format?: 'equirectangular' | 'cubemap';
-  fov?: number;
-  minFov?: number;
-  maxFov?: number;
-  autoRotate?: boolean;
-  autoRotateSpeed?: number;
-  gyroscope?: boolean;
-  width?: string;
-  height?: string;
-  viewLimits?: ViewLimits | null;
-  keyboardControls?: boolean;
-  renderOnDemand?: boolean;
-  showMiniMap?: boolean;
+  image: string | CubemapImages
+  format?: 'equirectangular' | 'cubemap'
+  fov?: number
+  minFov?: number
+  maxFov?: number
+  autoRotate?: boolean
+  autoRotateSpeed?: number
+  gyroscope?: boolean
+  width?: string
+  height?: string
+  viewLimits?: ViewLimits | null
+  keyboardControls?: boolean
+  renderOnDemand?: boolean
+  showMiniMap?: boolean
 }
 
 const props = withDefaults(defineProps<PanoramaViewerProps>(), {
@@ -69,34 +41,35 @@ const props = withDefaults(defineProps<PanoramaViewerProps>(), {
   keyboardControls: true,
   renderOnDemand: true,
   showMiniMap: true,
-});
+})
 
 const emit = defineEmits<{
-  ready: [];
-  error: [error: Error];
-  progress: [progress: number];
-  hotspotClick: [hotspot: Hotspot];
-}>();
+  ready: []
+  error: [error: Error]
+  progress: [progress: number]
+  hotspotClick: [hotspot: Hotspot]
+}>()
 
-const containerRef = ref<HTMLElement>();
-const viewerInstance = ref<CoreViewer | null>(null);
-const eventBus = new EventBus();
-const isLoading = ref(false);
-const loadingProgress = ref(0);
-const error = ref<Error | null>(null);
-const performanceStats = ref<PerformanceStats | null>(null);
+const containerRef = ref<HTMLElement>()
+const viewerInstance = ref<CoreViewer | null>(null)
+const eventBus = new EventBus()
+const isLoading = ref(false)
+const loadingProgress = ref(0)
+const error = ref<Error | null>(null)
+const performanceStats = ref<PerformanceStats | null>(null)
 
 const containerStyle = computed(() => ({
   width: props.width,
   height: props.height,
-}));
+}))
 
 // 提供给子组件
-provide('panoramaViewer', viewerInstance);
-provide('eventBus', eventBus);
+provide('panoramaViewer', viewerInstance)
+provide('eventBus', eventBus)
 
 onMounted(() => {
-  if (!containerRef.value) return;
+  if (!containerRef.value)
+    return
 
   try {
     const options: ViewerOptions = {
@@ -113,55 +86,56 @@ onMounted(() => {
       keyboardControls: props.keyboardControls,
       renderOnDemand: props.renderOnDemand,
       enablePerformanceMonitor: true,
-    };
+    }
 
-    viewerInstance.value = new CoreViewer(options, eventBus);
+    viewerInstance.value = new CoreViewer(options, eventBus)
 
     // 订阅事件
     eventBus.on('image:loading', ({ progress }) => {
-      isLoading.value = true;
-      loadingProgress.value = progress;
-      emit('progress', progress);
-    });
+      isLoading.value = true
+      loadingProgress.value = progress
+      emit('progress', progress)
+    })
 
     eventBus.on('image:loaded', () => {
-      isLoading.value = false;
-      error.value = null;
-    });
+      isLoading.value = false
+      error.value = null
+    })
 
     eventBus.on('image:error', ({ error: err }) => {
-      isLoading.value = false;
-      error.value = err;
-      emit('error', err);
-    });
+      isLoading.value = false
+      error.value = err
+      emit('error', err)
+    })
 
     eventBus.on('hotspot:click', ({ id, data }) => {
-      emit('hotspotClick', { id, data } as Hotspot);
-    });
+      emit('hotspotClick', { id, data } as Hotspot)
+    })
 
     eventBus.on('performance:stats', (stats) => {
-      performanceStats.value = stats as PerformanceStats;
-    });
+      performanceStats.value = stats as PerformanceStats
+    })
 
     // Set initial minimap visibility
     if (!props.showMiniMap && viewerInstance.value) {
-      viewerInstance.value.hideMiniMap();
+      viewerInstance.value.hideMiniMap()
     }
 
-    emit('ready');
-  } catch (err) {
-    error.value = err as Error;
-    emit('error', err as Error);
+    emit('ready')
   }
-});
+  catch (err) {
+    error.value = err as Error
+    emit('error', err as Error)
+  }
+})
 
 onBeforeUnmount(() => {
   if (viewerInstance.value) {
-    viewerInstance.value.dispose();
-    viewerInstance.value = null;
+    viewerInstance.value.dispose()
+    viewerInstance.value = null
   }
-  eventBus.dispose();
-});
+  eventBus.dispose()
+})
 
 // Watch for image changes
 watch(
@@ -169,13 +143,14 @@ watch(
   async (newImage) => {
     if (viewerInstance.value) {
       try {
-        await viewerInstance.value.loadImage(newImage, true);
-      } catch (error) {
-        emit('error', error as Error);
+        await viewerInstance.value.loadImage(newImage, true)
+      }
+      catch (error) {
+        emit('error', error as Error)
       }
     }
-  }
-);
+  },
+)
 
 // Watch for autoRotate changes
 watch(
@@ -183,23 +158,24 @@ watch(
   (newValue) => {
     if (viewerInstance.value) {
       if (newValue) {
-        viewerInstance.value.enableAutoRotate();
-      } else {
-        viewerInstance.value.disableAutoRotate();
+        viewerInstance.value.enableAutoRotate()
+      }
+      else {
+        viewerInstance.value.disableAutoRotate()
       }
     }
-  }
-);
+  },
+)
 
 // Watch for viewLimits changes
 watch(
   () => props.viewLimits,
   (newLimits) => {
     if (viewerInstance.value) {
-      viewerInstance.value.setViewLimits(newLimits);
+      viewerInstance.value.setViewLimits(newLimits)
     }
-  }
-);
+  },
+)
 
 // Watch for minimap visibility
 watch(
@@ -207,133 +183,134 @@ watch(
   (newValue) => {
     if (viewerInstance.value) {
       if (newValue) {
-        viewerInstance.value.showMiniMap();
-      } else {
-        viewerInstance.value.hideMiniMap();
+        viewerInstance.value.showMiniMap()
+      }
+      else {
+        viewerInstance.value.hideMiniMap()
       }
     }
-  }
-);
+  },
+)
 
 // Expose methods to parent component
-const loadImage = async (url: string | CubemapImages, transition = false): Promise<void> => {
+async function loadImage(url: string | CubemapImages, transition = false): Promise<void> {
   if (viewerInstance.value) {
-    await viewerInstance.value.loadImage(url, transition);
+    await viewerInstance.value.loadImage(url, transition)
   }
-};
+}
 
-const reset = (): void => {
+function reset(): void {
   if (viewerInstance.value) {
-    viewerInstance.value.reset();
+    viewerInstance.value.reset()
   }
-};
+}
 
-const enableAutoRotate = (): void => {
+function enableAutoRotate(): void {
   if (viewerInstance.value) {
-    viewerInstance.value.enableAutoRotate();
+    viewerInstance.value.enableAutoRotate()
   }
-};
+}
 
-const disableAutoRotate = (): void => {
+function disableAutoRotate(): void {
   if (viewerInstance.value) {
-    viewerInstance.value.disableAutoRotate();
+    viewerInstance.value.disableAutoRotate()
   }
-};
+}
 
-const enableGyroscope = async (): Promise<boolean> => {
+async function enableGyroscope(): Promise<boolean> {
   if (viewerInstance.value) {
-    return await viewerInstance.value.enableGyroscope();
+    return await viewerInstance.value.enableGyroscope()
   }
-  return false;
-};
+  return false
+}
 
-const disableGyroscope = (): void => {
+function disableGyroscope(): void {
   if (viewerInstance.value) {
-    viewerInstance.value.disableGyroscope();
+    viewerInstance.value.disableGyroscope()
   }
-};
+}
 
-const getRotation = () => {
+function getRotation() {
   if (viewerInstance.value) {
-    return viewerInstance.value.getRotation();
+    return viewerInstance.value.getRotation()
   }
-  return { x: 0, y: 0, z: 0 };
-};
+  return { x: 0, y: 0, z: 0 }
+}
 
-const setRotation = (x: number, y: number, z: number): void => {
+function setRotation(x: number, y: number, z: number): void {
   if (viewerInstance.value) {
-    viewerInstance.value.setRotation(x, y, z);
+    viewerInstance.value.setRotation(x, y, z)
   }
-};
+}
 
-const addHotspot = (hotspot: Hotspot): void => {
+function addHotspot(hotspot: Hotspot): void {
   if (viewerInstance.value) {
-    viewerInstance.value.addHotspot(hotspot);
+    viewerInstance.value.addHotspot(hotspot)
   }
-};
+}
 
-const removeHotspot = (id: string): void => {
+function removeHotspot(id: string): void {
   if (viewerInstance.value) {
-    viewerInstance.value.removeHotspot(id);
+    viewerInstance.value.removeHotspot(id)
   }
-};
+}
 
-const getHotspots = (): Hotspot[] => {
+function getHotspots(): Hotspot[] {
   if (viewerInstance.value) {
-    return viewerInstance.value.getHotspots();
+    return viewerInstance.value.getHotspots()
   }
-  return [];
-};
+  return []
+}
 
-const enterFullscreen = async (): Promise<void> => {
+async function enterFullscreen(): Promise<void> {
   if (viewerInstance.value) {
-    await viewerInstance.value.enterFullscreen();
+    await viewerInstance.value.enterFullscreen()
   }
-};
+}
 
-const exitFullscreen = (): void => {
+function exitFullscreen(): void {
   if (viewerInstance.value) {
-    viewerInstance.value.exitFullscreen();
+    viewerInstance.value.exitFullscreen()
   }
-};
+}
 
-const isFullscreen = (): boolean => {
+function isFullscreen(): boolean {
   if (viewerInstance.value) {
-    return viewerInstance.value.isFullscreen();
+    return viewerInstance.value.isFullscreen()
   }
-  return false;
-};
+  return false
+}
 
-const screenshot = (width?: number, height?: number): string => {
+function screenshot(width?: number, height?: number): string {
   if (viewerInstance.value) {
-    return viewerInstance.value.screenshot(width, height);
+    return viewerInstance.value.screenshot(width, height)
   }
-  return '';
-};
+  return ''
+}
 
-const setViewLimits = (limits: ViewLimits | null): void => {
+function setViewLimits(limits: ViewLimits | null): void {
   if (viewerInstance.value) {
-    viewerInstance.value.setViewLimits(limits);
+    viewerInstance.value.setViewLimits(limits)
   }
-};
+}
 
-const showMiniMap = (): void => {
+function showMiniMap(): void {
   if (viewerInstance.value) {
-    viewerInstance.value.showMiniMap();
+    viewerInstance.value.showMiniMap()
   }
-};
+}
 
-const hideMiniMap = (): void => {
+function hideMiniMap(): void {
   if (viewerInstance.value) {
-    viewerInstance.value.hideMiniMap();
+    viewerInstance.value.hideMiniMap()
   }
-};
+}
 
-const toggleMiniMap = (): void => {
+function toggleMiniMap(): void {
   if (viewerInstance.value) {
-    viewerInstance.value.toggleMiniMap();
+    viewerInstance.value.toggleMiniMap()
   }
-};
+}
 
 // 暴露的方法对象
 const exposedMethods = {
@@ -358,10 +335,40 @@ const exposedMethods = {
   toggleMiniMap,
   getViewer: () => viewerInstance.value,
   getEventBus: () => eventBus,
-};
+}
 
-defineExpose(exposedMethods);
+defineExpose(exposedMethods)
 </script>
+
+<template>
+  <div ref="containerRef" class="panorama-viewer" :style="containerStyle">
+    <!-- 默认插槽 - 用于自定义UI叠加层 -->
+    <slot />
+
+    <!-- 加载插槽 -->
+    <slot v-if="isLoading" name="loading" :progress="loadingProgress">
+      <div class="default-loading">
+        <div class="loading-spinner" />
+        <div class="loading-text">
+          {{ loadingProgress.toFixed(0) }}%
+        </div>
+      </div>
+    </slot>
+
+    <!-- 错误插槽 -->
+    <slot v-if="error" name="error" :error="error">
+      <div class="default-error">
+        <p>{{ error.message }}</p>
+      </div>
+    </slot>
+
+    <!-- 控制器插槽 -->
+    <slot name="controls" :viewer="viewerInstance" :methods="exposedMethods" />
+
+    <!-- 信息插槽 -->
+    <slot name="info" :stats="performanceStats" />
+  </div>
+</template>
 
 <style scoped>
 .panorama-viewer {
@@ -393,7 +400,9 @@ defineExpose(exposedMethods);
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-text {

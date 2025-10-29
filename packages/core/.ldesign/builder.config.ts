@@ -2,7 +2,7 @@
  * @panorama-viewer/core 构建配置
  */
 
-import { defineConfig } from '@ldesign/builder';
+import { defineConfig } from '@ldesign/builder'
 
 export default defineConfig({
   // 包名
@@ -39,5 +39,4 @@ export default defineConfig({
     // 包体积分析
     bundleSize: true,
   },
-});
-
+})

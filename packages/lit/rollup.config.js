@@ -1,8 +1,8 @@
-import typescript from '@rollup/plugin-typescript';
-import resolve from '@rollup/plugin-node-resolve';
-import dts from 'rollup-plugin-dts';
+import typescript from '@rollup/plugin-typescript'
+import resolve from '@rollup/plugin-node-resolve'
+import dts from 'rollup-plugin-dts'
 
-const external = ['lit', 'lit/decorators.js', 'three', '@panorama-viewer/core'];
+const external = ['lit', 'lit/decorators.js', 'three', '@panorama-viewer/core']
 
 export default [
   // ESM and CJS builds
@@ -39,6 +39,4 @@ export default [
     external,
     plugins: [dts()],
   },
-];
-
-
+]

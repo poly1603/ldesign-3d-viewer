@@ -2,7 +2,7 @@
  * @panorama-viewer/vue 构建配置
  */
 
-import { defineConfig } from '@ldesign/builder';
+import { defineConfig } from '@ldesign/builder'
 
 export default defineConfig({
   name: '@panorama-viewer/vue',
@@ -36,5 +36,4 @@ export default defineConfig({
     // 输出文件名
     filename: 'style.css',
   },
-});
-
+})

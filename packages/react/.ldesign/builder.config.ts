@@ -2,7 +2,7 @@
  * @panorama-viewer/react 构建配置
  */
 
-import { defineConfig } from '@ldesign/builder';
+import { defineConfig } from '@ldesign/builder'
 
 export default defineConfig({
   name: '@panorama-viewer/react',
@@ -29,5 +29,4 @@ export default defineConfig({
     declaration: true,
     declarationDir: 'dist',
   },
-});
-
+})

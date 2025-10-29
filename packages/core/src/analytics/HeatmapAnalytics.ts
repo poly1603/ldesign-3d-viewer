@@ -3,54 +3,54 @@
  * 追踪用户视线、点击和停留时间，生成热力图
  */
 
-import * as THREE from 'three';
-import { EventBus } from '../core/EventBus';
+import * as THREE from 'three'
+import { EventBus } from '../core/EventBus'
 
 export interface HeatPoint {
-  theta: number;
-  phi: number;
-  intensity: number;
-  timestamp: number;
-  type: 'view' | 'click' | 'hover';
+  theta: number
+  phi: number
+  intensity: number
+  timestamp: number
+  type: 'view' | 'click' | 'hover'
 }
 
 export interface HeatmapConfig {
-  resolution: number; // 热力图分辨率
-  decay: number; // 衰减率 (0-1)
-  radius: number; // 热点半径
-  maxIntensity: number;
-  colorScheme: 'hot' | 'cool' | 'rainbow' | 'grayscale';
+  resolution: number // 热力图分辨率
+  decay: number // 衰减率 (0-1)
+  radius: number // 热点半径
+  maxIntensity: number
+  colorScheme: 'hot' | 'cool' | 'rainbow' | 'grayscale'
 }
 
 export interface AnalyticsData {
-  totalViews: number;
-  totalClicks: number;
-  totalHoverTime: number;
-  averageViewTime: number;
-  hotspots: HeatPoint[];
-  sessionStart: number;
-  sessionEnd: number;
+  totalViews: number
+  totalClicks: number
+  totalHoverTime: number
+  averageViewTime: number
+  hotspots: HeatPoint[]
+  sessionStart: number
+  sessionEnd: number
 }
 
 export class HeatmapAnalytics {
-  private heatPoints: HeatPoint[] = [];
-  private config: Required<HeatmapConfig>;
-  private canvas: HTMLCanvasElement;
-  private ctx: CanvasRenderingContext2D;
-  private container: HTMLElement;
-  private camera: THREE.PerspectiveCamera;
-  private eventBus: EventBus;
+  private heatPoints: HeatPoint[] = []
+  private config: Required<HeatmapConfig>
+  private canvas: HTMLCanvasElement
+  private ctx: CanvasRenderingContext2D
+  private container: HTMLElement
+  private camera: THREE.PerspectiveCamera
+  private eventBus: EventBus
 
   // 追踪数据
-  private viewHistory: { theta: number; phi: number; timestamp: number }[] = [];
-  private clickCount = 0;
-  private hoverTime = 0;
-  private sessionStart = Date.now();
+  private viewHistory: { theta: number, phi: number, timestamp: number }[] = []
+  private clickCount = 0
+  private hoverTime = 0
+  private sessionStart = Date.now()
 
   // 更新控制
-  private lastUpdate = 0;
-  private updateInterval = 100; // ms
-  private isTracking = false;
+  private lastUpdate = 0
+  private updateInterval = 100 // ms
+  private isTracking = false
 
   private defaultConfig: HeatmapConfig = {
     resolution: 256,
@@ -58,35 +58,35 @@ export class HeatmapAnalytics {
     radius: 20,
     maxIntensity: 100,
     colorScheme: 'hot',
-  };
+  }
 
   constructor(
     container: HTMLElement,
     camera: THREE.PerspectiveCamera,
     eventBus?: EventBus,
-    config?: Partial<HeatmapConfig>
+    config?: Partial<HeatmapConfig>,
   ) {
-    this.container = container;
-    this.camera = camera;
-    this.eventBus = eventBus || new EventBus();
-    this.config = { ...this.defaultConfig, ...config };
+    this.container = container
+    this.camera = camera
+    this.eventBus = eventBus || new EventBus()
+    this.config = { ...this.defaultConfig, ...config }
 
     // 创建热力图画布
-    this.canvas = document.createElement('canvas');
-    this.canvas.width = this.config.resolution;
-    this.canvas.height = this.config.resolution;
-    this.canvas.style.position = 'absolute';
-    this.canvas.style.top = '0';
-    this.canvas.style.left = '0';
-    this.canvas.style.pointerEvents = 'none';
-    this.canvas.style.opacity = '0.6';
-    this.canvas.style.display = 'none'; // 默认隐藏
-    this.canvas.style.zIndex = '5';
+    this.canvas = document.createElement('canvas')
+    this.canvas.width = this.config.resolution
+    this.canvas.height = this.config.resolution
+    this.canvas.style.position = 'absolute'
+    this.canvas.style.top = '0'
+    this.canvas.style.left = '0'
+    this.canvas.style.pointerEvents = 'none'
+    this.canvas.style.opacity = '0.6'
+    this.canvas.style.display = 'none' // 默认隐藏
+    this.canvas.style.zIndex = '5'
 
-    this.ctx = this.canvas.getContext('2d')!;
-    this.container.appendChild(this.canvas);
+    this.ctx = this.canvas.getContext('2d')!
+    this.container.appendChild(this.canvas)
 
-    this.setupEventListeners();
+    this.setupEventListeners()
   }
 
   /**
@@ -95,51 +95,54 @@ export class HeatmapAnalytics {
   private setupEventListeners(): void {
     // 监听点击
     this.container.addEventListener('click', (e) => {
-      if (!this.isTracking) return;
+      if (!this.isTracking)
+        return
 
-      const { theta, phi } = this.getSphericalFromMouse(e);
-      this.addHeatPoint(theta, phi, 'click', 10);
-      this.clickCount++;
-    });
+      const { theta, phi } = this.getSphericalFromMouse(e)
+      this.addHeatPoint(theta, phi, 'click', 10)
+      this.clickCount++
+    })
 
     // 监听鼠标移动（视线追踪）
     this.container.addEventListener('mousemove', (e) => {
-      if (!this.isTracking) return;
+      if (!this.isTracking)
+        return
 
-      const now = Date.now();
-      if (now - this.lastUpdate < this.updateInterval) return;
+      const now = Date.now()
+      if (now - this.lastUpdate < this.updateInterval)
+        return
 
-      const { theta, phi } = this.getSphericalFromMouse(e);
-      this.addHeatPoint(theta, phi, 'view', 1);
+      const { theta, phi } = this.getSphericalFromMouse(e)
+      this.addHeatPoint(theta, phi, 'view', 1)
 
-      this.viewHistory.push({ theta, phi, timestamp: now });
-      this.lastUpdate = now;
-    });
+      this.viewHistory.push({ theta, phi, timestamp: now })
+      this.lastUpdate = now
+    })
   }
 
   /**
    * 从鼠标位置获取球面坐标
    */
-  private getSphericalFromMouse(event: MouseEvent): { theta: number; phi: number } {
-    const rect = this.container.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-    const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+  private getSphericalFromMouse(event: MouseEvent): { theta: number, phi: number } {
+    const rect = this.container.getBoundingClientRect()
+    const x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+    const y = -((event.clientY - rect.top) / rect.height) * 2 + 1
 
     // 创建射线
-    const raycaster = new THREE.Raycaster();
-    raycaster.setFromCamera(new THREE.Vector2(x, y), this.camera);
+    const raycaster = new THREE.Raycaster()
+    raycaster.setFromCamera(new THREE.Vector2(x, y), this.camera)
 
     // 获取方向
-    const direction = raycaster.ray.direction;
+    const direction = raycaster.ray.direction
 
     // 转换为球面坐标
-    const spherical = new THREE.Spherical();
-    spherical.setFromVector3(direction);
+    const spherical = new THREE.Spherical()
+    spherical.setFromVector3(direction)
 
     return {
       theta: spherical.theta,
       phi: spherical.phi,
-    };
+    }
   }
 
   /**
@@ -149,7 +152,7 @@ export class HeatmapAnalytics {
     theta: number,
     phi: number,
     type: HeatPoint['type'],
-    intensity: number = 1
+    intensity: number = 1,
   ): void {
     this.heatPoints.push({
       theta,
@@ -157,14 +160,14 @@ export class HeatmapAnalytics {
       intensity,
       timestamp: Date.now(),
       type,
-    });
+    })
 
     // 限制热点数量
     if (this.heatPoints.length > 10000) {
-      this.heatPoints.shift();
+      this.heatPoints.shift()
     }
 
-    this.render();
+    this.render()
   }
 
   /**
@@ -172,42 +175,42 @@ export class HeatmapAnalytics {
    */
   public render(): void {
     // 清空画布
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
 
     // 应用衰减
-    this.applyDecay();
+    this.applyDecay()
 
     // 创建热力图数据
-    const data = new Uint8ClampedArray(this.canvas.width * this.canvas.height * 4);
+    const data = new Uint8ClampedArray(this.canvas.width * this.canvas.height * 4)
 
     // 绘制每个热点
-    this.heatPoints.forEach(point => {
-      const { x, y } = this.sphericalToCanvas(point.theta, point.phi);
-      const intensity = Math.min(point.intensity, this.config.maxIntensity);
+    this.heatPoints.forEach((point) => {
+      const { x, y } = this.sphericalToCanvas(point.theta, point.phi)
+      const intensity = Math.min(point.intensity, this.config.maxIntensity)
 
-      this.drawHeatPoint(data, x, y, intensity);
-    });
+      this.drawHeatPoint(data, x, y, intensity)
+    })
 
     // 应用颜色方案
-    this.applyColorScheme(data);
+    this.applyColorScheme(data)
 
     // 更新画布
-    const imageData = new ImageData(data, this.canvas.width, this.canvas.height);
-    this.ctx.putImageData(imageData, 0, 0);
+    const imageData = new ImageData(data, this.canvas.width, this.canvas.height)
+    this.ctx.putImageData(imageData, 0, 0)
   }
 
   /**
    * 球面坐标转画布坐标
    */
-  private sphericalToCanvas(theta: number, phi: number): { x: number; y: number } {
+  private sphericalToCanvas(theta: number, phi: number): { x: number, y: number } {
     // 等距柱状投影
-    const x = Math.floor((theta / (Math.PI * 2) + 0.5) * this.canvas.width);
-    const y = Math.floor((phi / Math.PI) * this.canvas.height);
+    const x = Math.floor((theta / (Math.PI * 2) + 0.5) * this.canvas.width)
+    const y = Math.floor((phi / Math.PI) * this.canvas.height)
 
     return {
       x: Math.max(0, Math.min(x, this.canvas.width - 1)),
       y: Math.max(0, Math.min(y, this.canvas.height - 1)),
-    };
+    }
   }
 
   /**
@@ -217,28 +220,30 @@ export class HeatmapAnalytics {
     data: Uint8ClampedArray,
     x: number,
     y: number,
-    intensity: number
+    intensity: number,
   ): void {
-    const radius = this.config.radius;
-    const width = this.canvas.width;
-    const height = this.canvas.height;
+    const radius = this.config.radius
+    const width = this.canvas.width
+    const height = this.canvas.height
 
     for (let dy = -radius; dy <= radius; dy++) {
       for (let dx = -radius; dx <= radius; dx++) {
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        if (distance > radius) continue;
+        const distance = Math.sqrt(dx * dx + dy * dy)
+        if (distance > radius)
+          continue
 
-        const px = x + dx;
-        const py = y + dy;
+        const px = x + dx
+        const py = y + dy
 
-        if (px < 0 || px >= width || py < 0 || py >= height) continue;
+        if (px < 0 || px >= width || py < 0 || py >= height)
+          continue
 
         // 计算强度（高斯分布）
-        const falloff = Math.exp(-((distance * distance) / (radius * radius * 0.5)));
-        const value = intensity * falloff;
+        const falloff = Math.exp(-((distance * distance) / (radius * radius * 0.5)))
+        const value = intensity * falloff
 
-        const index = (py * width + px) * 4;
-        data[index] = Math.min(255, data[index] + value); // R通道存储强度
+        const index = (py * width + px) * 4
+        data[index] = Math.min(255, data[index] + value) // R通道存储强度
       }
     }
   }
@@ -247,57 +252,65 @@ export class HeatmapAnalytics {
    * 应用颜色方案
    */
   private applyColorScheme(data: Uint8ClampedArray): void {
-    const scheme = this.config.colorScheme;
+    const scheme = this.config.colorScheme
 
     for (let i = 0; i < data.length; i += 4) {
-      const intensity = data[i] / 255;
+      const intensity = data[i] / 255
 
-      let r = 0, g = 0, b = 0;
+      let r = 0
+      let g = 0
+      let b = 0
 
       switch (scheme) {
-        case 'hot':
+        case 'hot': {
           // 黑 -> 红 -> 黄 -> 白
           if (intensity < 0.33) {
-            r = intensity * 3 * 255;
-          } else if (intensity < 0.66) {
-            r = 255;
-            g = (intensity - 0.33) * 3 * 255;
-          } else {
-            r = 255;
-            g = 255;
-            b = (intensity - 0.66) * 3 * 255;
+            r = intensity * 3 * 255
           }
-          break;
+          else if (intensity < 0.66) {
+            r = 255
+            g = (intensity - 0.33) * 3 * 255
+          }
+          else {
+            r = 255
+            g = 255
+            b = (intensity - 0.66) * 3 * 255
+          }
+          break
+        }
 
-        case 'cool':
+        case 'cool': {
           // 黑 -> 蓝 -> 青 -> 白
           if (intensity < 0.5) {
-            b = intensity * 2 * 255;
-          } else {
-            b = 255;
-            g = (intensity - 0.5) * 2 * 255;
-            r = (intensity - 0.5) * 2 * 255;
+            b = intensity * 2 * 255
           }
-          break;
+          else {
+            b = 255
+            g = (intensity - 0.5) * 2 * 255
+            r = (intensity - 0.5) * 2 * 255
+          }
+          break
+        }
 
-        case 'rainbow':
+        case 'rainbow': {
           // 彩虹色
-          const hue = intensity * 270; // 0-270度
-          const rgb = this.hslToRgb(hue / 360, 1, 0.5);
-          r = rgb[0];
-          g = rgb[1];
-          b = rgb[2];
-          break;
+          const hue = intensity * 270 // 0-270度
+          const rgb = this.hslToRgb(hue / 360, 1, 0.5)
+          r = rgb[0]
+          g = rgb[1]
+          b = rgb[2]
+          break
+        }
 
         case 'grayscale':
-          r = g = b = intensity * 255;
-          break;
+          r = g = b = intensity * 255
+          break
       }
 
-      data[i] = r;
-      data[i + 1] = g;
-      data[i + 2] = b;
-      data[i + 3] = intensity > 0 ? 255 : 0; // Alpha
+      data[i] = r
+      data[i + 1] = g
+      data[i + 2] = b
+      data[i + 3] = intensity > 0 ? 255 : 0 // Alpha
     }
   }
 
@@ -305,91 +318,97 @@ export class HeatmapAnalytics {
    * HSL转RGB
    */
   private hslToRgb(h: number, s: number, l: number): [number, number, number] {
-    let r, g, b;
+    let r, g, b
 
     if (s === 0) {
-      r = g = b = l;
-    } else {
+      r = g = b = l
+    }
+    else {
       const hue2rgb = (p: number, q: number, t: number) => {
-        if (t < 0) t += 1;
-        if (t > 1) t -= 1;
-        if (t < 1 / 6) return p + (q - p) * 6 * t;
-        if (t < 1 / 2) return q;
-        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-        return p;
-      };
+        if (t < 0)
+          t += 1
+        if (t > 1)
+          t -= 1
+        if (t < 1 / 6)
+          return p + (q - p) * 6 * t
+        if (t < 1 / 2)
+          return q
+        if (t < 2 / 3)
+          return p + (q - p) * (2 / 3 - t) * 6
+        return p
+      }
 
-      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-      const p = 2 * l - q;
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s
+      const p = 2 * l - q
 
-      r = hue2rgb(p, q, h + 1 / 3);
-      g = hue2rgb(p, q, h);
-      b = hue2rgb(p, q, h - 1 / 3);
+      r = hue2rgb(p, q, h + 1 / 3)
+      g = hue2rgb(p, q, h)
+      b = hue2rgb(p, q, h - 1 / 3)
     }
 
-    return [r * 255, g * 255, b * 255];
+    return [r * 255, g * 255, b * 255]
   }
 
   /**
    * 应用衰减
    */
   private applyDecay(): void {
-    const decayRate = this.config.decay;
-    this.heatPoints.forEach(point => {
-      point.intensity *= decayRate;
-    });
+    const decayRate = this.config.decay
+    this.heatPoints.forEach((point) => {
+      point.intensity *= decayRate
+    })
 
     // 移除强度太低的点
-    this.heatPoints = this.heatPoints.filter(point => point.intensity > 0.1);
+    this.heatPoints = this.heatPoints.filter(point => point.intensity > 0.1)
   }
 
   /**
    * 开始追踪
    */
   public startTracking(): void {
-    this.isTracking = true;
-    this.sessionStart = Date.now();
-    this.eventBus.emit('analytics:tracking-started', {});
+    this.isTracking = true
+    this.sessionStart = Date.now()
+    this.eventBus.emit('analytics:tracking-started', {})
   }
 
   /**
    * 停止追踪
    */
   public stopTracking(): void {
-    this.isTracking = false;
-    this.eventBus.emit('analytics:tracking-stopped', {});
+    this.isTracking = false
+    this.eventBus.emit('analytics:tracking-stopped', {})
   }
 
   /**
    * 显示热力图
    */
   public show(): void {
-    this.canvas.style.display = 'block';
-    this.resize();
+    this.canvas.style.display = 'block'
+    this.resize()
   }
 
   /**
    * 隐藏热力图
    */
   public hide(): void {
-    this.canvas.style.display = 'none';
+    this.canvas.style.display = 'none'
   }
 
   /**
    * 调整大小
    */
   private resize(): void {
-    const rect = this.container.getBoundingClientRect();
-    this.canvas.style.width = rect.width + 'px';
-    this.canvas.style.height = rect.height + 'px';
+    const rect = this.container.getBoundingClientRect()
+    this.canvas.style.width = `${rect.width}px`
+    this.canvas.style.height = `${rect.height}px`
   }
 
   /**
    * 导出分析数据
    */
   public exportData(): AnalyticsData {
-    const sessionEnd = Date.now();
-    const sessionDuration = sessionEnd - this.sessionStart;
+    const sessionEnd = Date.now()
+    const sessionDuration = sessionEnd - this.sessionStart
 
     return {
       totalViews: this.viewHistory.length,
@@ -399,17 +418,17 @@ export class HeatmapAnalytics {
       hotspots: this.heatPoints.map(p => ({ ...p })),
       sessionStart: this.sessionStart,
       sessionEnd,
-    };
+    }
   }
 
   /**
    * 导入分析数据
    */
   public importData(data: AnalyticsData): void {
-    this.heatPoints = data.hotspots.map(p => ({ ...p }));
-    this.clickCount = data.totalClicks;
-    this.sessionStart = data.sessionStart;
-    this.render();
+    this.heatPoints = data.hotspots.map(p => ({ ...p }))
+    this.clickCount = data.totalClicks
+    this.sessionStart = data.sessionStart
+    this.render()
   }
 
   /**
@@ -417,33 +436,33 @@ export class HeatmapAnalytics {
    * 返回最热的N个区域
    */
   public getHotRegions(count: number = 10): Array<{
-    position: { theta: number; phi: number };
-    intensity: number;
+    position: { theta: number, phi: number }
+    intensity: number
   }> {
     // 按强度排序
-    const sorted = [...this.heatPoints].sort((a, b) => b.intensity - a.intensity);
+    const sorted = [...this.heatPoints].sort((a, b) => b.intensity - a.intensity)
 
     return sorted.slice(0, count).map(point => ({
       position: { theta: point.theta, phi: point.phi },
       intensity: point.intensity,
-    }));
+    }))
   }
 
   /**
    * 获取统计信息
    */
   public getStats(): {
-    totalPoints: number;
-    totalClicks: number;
-    totalViews: number;
-    averageIntensity: number;
-    maxIntensity: number;
-    sessionDuration: number;
+    totalPoints: number
+    totalClicks: number
+    totalViews: number
+    averageIntensity: number
+    maxIntensity: number
+    sessionDuration: number
   } {
-    const totalIntensity = this.heatPoints.reduce((sum, p) => sum + p.intensity, 0);
-    const avgIntensity = totalIntensity / (this.heatPoints.length || 1);
-    const maxIntensity = Math.max(...this.heatPoints.map(p => p.intensity), 0);
-    const sessionDuration = Date.now() - this.sessionStart;
+    const totalIntensity = this.heatPoints.reduce((sum, p) => sum + p.intensity, 0)
+    const avgIntensity = totalIntensity / (this.heatPoints.length || 1)
+    const maxIntensity = Math.max(...this.heatPoints.map(p => p.intensity), 0)
+    const sessionDuration = Date.now() - this.sessionStart
 
     return {
       totalPoints: this.heatPoints.length,
@@ -452,43 +471,43 @@ export class HeatmapAnalytics {
       averageIntensity: avgIntensity,
       maxIntensity,
       sessionDuration,
-    };
+    }
   }
 
   /**
    * 清除数据
    */
   public clear(): void {
-    this.heatPoints = [];
-    this.viewHistory = [];
-    this.clickCount = 0;
-    this.hoverTime = 0;
-    this.sessionStart = Date.now();
-    this.render();
+    this.heatPoints = []
+    this.viewHistory = []
+    this.clickCount = 0
+    this.hoverTime = 0
+    this.sessionStart = Date.now()
+    this.render()
   }
 
   /**
    * 设置颜色方案
    */
   public setColorScheme(scheme: HeatmapConfig['colorScheme']): void {
-    this.config.colorScheme = scheme;
-    this.render();
+    this.config.colorScheme = scheme
+    this.render()
   }
 
   /**
    * 生成报告
    */
   public generateReport(): string {
-    const stats = this.getStats();
-    const hotRegions = this.getHotRegions(5);
+    const stats = this.getStats()
+    const hotRegions = this.getHotRegions(5)
 
     const formatTime = (ms: number) => {
-      const seconds = Math.floor(ms / 1000);
-      const minutes = Math.floor(seconds / 60);
-      return `${minutes}m ${seconds % 60}s`;
-    };
+      const seconds = Math.floor(ms / 1000)
+      const minutes = Math.floor(seconds / 60)
+      return `${minutes}m ${seconds % 60}s`
+    }
 
-    let report = `
+    const report = `
 Heatmap Analytics Report
 ========================
 
@@ -503,32 +522,31 @@ Heat Statistics:
 
 Top 5 Hot Regions:
 ${hotRegions.map((region, i) =>
-      `${i + 1}. θ=${region.position.theta.toFixed(2)}, φ=${region.position.phi.toFixed(2)} (Intensity: ${region.intensity.toFixed(2)})`
-    ).join('\n')}
+  `${i + 1}. θ=${region.position.theta.toFixed(2)}, φ=${region.position.phi.toFixed(2)} (Intensity: ${region.intensity.toFixed(2)})`,
+).join('\n')}
 
 Configuration:
 - Resolution: ${this.config.resolution}
 - Color Scheme: ${this.config.colorScheme}
 - Decay Rate: ${this.config.decay}
-    `.trim();
+    `.trim()
 
-    return report;
+    return report
   }
 
   /**
    * 导出热力图图像
    */
   public exportImage(): string {
-    return this.canvas.toDataURL('image/png');
+    return this.canvas.toDataURL('image/png')
   }
 
   /**
    * 清理资源
    */
   public dispose(): void {
-    this.canvas.remove();
-    this.heatPoints = [];
-    this.viewHistory = [];
+    this.canvas.remove()
+    this.heatPoints = []
+    this.viewHistory = []
   }
 }
-

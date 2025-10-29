@@ -14,44 +14,40 @@ npm install @panorama-viewer/lit three
 
 ```html
 <script type="module">
-  import '@panorama-viewer/lit';
+  import '@panorama-viewer/lit'
 </script>
 
-<panorama-viewer
-  image="path/to/panorama.jpg"
-  auto-rotate
-  width="100%"
-  height="600px"
-></panorama-viewer>
+<panorama-viewer image="path/to/panorama.jpg" auto-rotate width="100%" height="600px"></panorama-viewer>
+
 ```
 
 ### With JavaScript
 
 ```javascript
-import '@panorama-viewer/lit';
+import '@panorama-viewer/lit'
 
-const viewer = document.querySelector('panorama-viewer');
+const viewer = document.querySelector('panorama-viewer')
 
 // Listen to events
 viewer.addEventListener('ready', () => {
-  console.log('Viewer ready!');
-});
+  console.log('Viewer ready!')
+})
 
 viewer.addEventListener('error', (e) => {
-  console.error('Error:', e.detail.error);
-});
+  console.error('Error:', e.detail.error)
+})
 
 // Call methods
-viewer.reset();
-await viewer.enableGyroscope();
+viewer.reset()
+await viewer.enableGyroscope()
 ```
 
 ### In Lit Application
 
 ```typescript
-import { LitElement, html } from 'lit';
-import { customElement } from 'lit/decorators.js';
-import '@panorama-viewer/lit';
+import { LitElement, html } from 'lit'
+import { customElement } from 'lit/decorators.js'
+import '@panorama-viewer/lit'
 
 @customElement('my-app')
 export class MyApp extends LitElement {
@@ -63,32 +59,32 @@ export class MyApp extends LitElement {
         @ready=${this.handleReady}
         @error=${this.handleError}
       ></panorama-viewer>
-    `;
+    `
   }
 
   handleReady() {
-    console.log('Ready!');
+    console.log('Ready!')
   }
 
   handleError(e) {
-    console.error(e.detail.error);
+    console.error(e.detail.error)
   }
 }
 ```
 
 ## Attributes
 
-| Attribute | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `image` | `string` | **required** | Panorama image URL |
-| `fov` | `number` | `75` | Field of view |
-| `min-fov` | `number` | `30` | Minimum FOV |
-| `max-fov` | `number` | `100` | Maximum FOV |
-| `auto-rotate` | `boolean` | `false` | Auto rotation |
-| `auto-rotate-speed` | `number` | `0.5` | Rotation speed |
-| `gyroscope` | `boolean` | `true` | Enable gyroscope |
-| `width` | `string` | `'100%'` | Container width |
-| `height` | `string` | `'500px'` | Container height |
+| Attribute           | Type      | Default      | Description        |
+| ------------------- | --------- | ------------ | ------------------ |
+| `image`             | `string`  | **required** | Panorama image URL |
+| `fov`               | `number`  | `75`         | Field of view      |
+| `min-fov`           | `number`  | `30`         | Minimum FOV        |
+| `max-fov`           | `number`  | `100`        | Maximum FOV        |
+| `auto-rotate`       | `boolean` | `false`      | Auto rotation      |
+| `auto-rotate-speed` | `number`  | `0.5`        | Rotation speed     |
+| `gyroscope`         | `boolean` | `true`       | Enable gyroscope   |
+| `width`             | `string`  | `'100%'`     | Container width    |
+| `height`            | `string`  | `'500px'`    | Container height   |
 
 ## Events
 
@@ -113,13 +109,11 @@ Access these methods via JavaScript:
 TypeScript definitions are included:
 
 ```typescript
-import type { PanoramaViewerElement } from '@panorama-viewer/lit';
+import type { PanoramaViewerElement } from '@panorama-viewer/lit'
 
-const viewer = document.querySelector('panorama-viewer') as PanoramaViewerElement;
+const viewer = document.querySelector('panorama-viewer') as PanoramaViewerElement
 ```
 
 ## License
 
 MIT
-
-

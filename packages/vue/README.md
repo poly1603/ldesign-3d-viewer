@@ -13,6 +13,10 @@ npm install @panorama-viewer/vue three
 ### Basic Usage
 
 ```vue
+<script setup>
+import { PanoramaViewer } from '@panorama-viewer/vue'
+</script>
+
 <template>
   <PanoramaViewer
     image="path/to/panorama.jpg"
@@ -21,20 +25,46 @@ npm install @panorama-viewer/vue three
     height="600px"
   />
 </template>
-
-<script setup>
-import { PanoramaViewer } from '@panorama-viewer/vue';
-</script>
 ```
 
 ### With Methods
 
 ```vue
+<script setup>
+import { ref } from 'vue'
+import { PanoramaViewer } from '@panorama-viewer/vue'
+
+const viewer = ref()
+const autoRotate = ref(false)
+const currentImage = ref('panorama.jpg')
+
+function reset() {
+  viewer.value?.reset()
+}
+
+async function enableGyro() {
+  const success = await viewer.value?.enableGyroscope()
+  console.log('Gyroscope enabled:', success)
+}
+
+function onReady() {
+  console.log('Viewer ready!')
+}
+
+function onError(error) {
+  console.error('Error:', error)
+}
+</script>
+
 <template>
   <div>
-    <button @click="reset">Reset</button>
-    <button @click="enableGyro">Enable Gyroscope</button>
-    
+    <button @click="reset">
+      Reset
+    </button>
+    <button @click="enableGyro">
+      Enable Gyroscope
+    </button>
+
     <PanoramaViewer
       ref="viewer"
       :image="currentImage"
@@ -44,47 +74,21 @@ import { PanoramaViewer } from '@panorama-viewer/vue';
     />
   </div>
 </template>
-
-<script setup>
-import { ref } from 'vue';
-import { PanoramaViewer } from '@panorama-viewer/vue';
-
-const viewer = ref();
-const autoRotate = ref(false);
-const currentImage = ref('panorama.jpg');
-
-const reset = () => {
-  viewer.value?.reset();
-};
-
-const enableGyro = async () => {
-  const success = await viewer.value?.enableGyroscope();
-  console.log('Gyroscope enabled:', success);
-};
-
-const onReady = () => {
-  console.log('Viewer ready!');
-};
-
-const onError = (error) => {
-  console.error('Error:', error);
-};
-</script>
 ```
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `image` | `String` | **required** | Panorama image URL |
-| `fov` | `Number` | `75` | Field of view |
-| `minFov` | `Number` | `30` | Minimum FOV |
-| `maxFov` | `Number` | `100` | Maximum FOV |
-| `autoRotate` | `Boolean` | `false` | Auto rotation |
-| `autoRotateSpeed` | `Number` | `0.5` | Rotation speed |
-| `gyroscope` | `Boolean` | `true` | Enable gyroscope |
-| `width` | `String` | `'100%'` | Container width |
-| `height` | `String` | `'500px'` | Container height |
+| Prop              | Type      | Default      | Description        |
+| ----------------- | --------- | ------------ | ------------------ |
+| `image`           | `String`  | **required** | Panorama image URL |
+| `fov`             | `Number`  | `75`         | Field of view      |
+| `minFov`          | `Number`  | `30`         | Minimum FOV        |
+| `maxFov`          | `Number`  | `100`        | Maximum FOV        |
+| `autoRotate`      | `Boolean` | `false`      | Auto rotation      |
+| `autoRotateSpeed` | `Number`  | `0.5`        | Rotation speed     |
+| `gyroscope`       | `Boolean` | `true`       | Enable gyroscope   |
+| `width`           | `String`  | `'100%'`     | Container width    |
+| `height`          | `String`  | `'500px'`    | Container height   |
 
 ## Events
 
@@ -107,5 +111,3 @@ Access these methods using template refs:
 ## License
 
 MIT
-
-
