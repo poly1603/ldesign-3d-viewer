@@ -1,13 +1,10 @@
-import React, { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { PanoramaViewer, PanoramaViewerRef } from '@panorama-viewer/react';
 import type { Hotspot, ViewLimits } from '@panorama-viewer/core';
 import {
   deviceCapability,
   powerManager,
   formatDetector,
-  SceneManager,
-  AnnotationManager,
-  ColorGrading,
   themeManager,
 } from '@panorama-viewer/core';
 import './App.css';

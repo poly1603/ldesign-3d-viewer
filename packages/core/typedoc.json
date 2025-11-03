@@ -1,0 +1,33 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/index.ts"],
+  "out": "docs",
+  "plugin": [],
+  "readme": "README.md",
+  "name": "@panorama-viewer/core",
+  "includeVersion": true,
+  "excludePrivate": true,
+  "excludeProtected": false,
+  "excludeExternals": true,
+  "categorizeByGroup": true,
+  "categoryOrder": [
+    "Core",
+    "Viewer",
+    "Controls",
+    "Hotspots",
+    "Video",
+    "VR/AR",
+    "Plugins",
+    "Utilities",
+    "*"
+  ],
+  "sort": ["source-order"],
+  "validation": {
+    "notExported": true,
+    "invalidLink": true,
+    "notDocumented": false
+  },
+  "excludeInternal": true,
+  "treatWarningsAsErrors": false,
+  "cleanOutputDir": true
+}

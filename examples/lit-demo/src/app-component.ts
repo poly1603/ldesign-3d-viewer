@@ -7,9 +7,6 @@ import {
   deviceCapability,
   powerManager,
   formatDetector,
-  SceneManager,
-  AnnotationManager,
-  ColorGrading,
   themeManager,
 } from '@panorama-viewer/core';
 

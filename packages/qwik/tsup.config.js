@@ -2,7 +2,7 @@ import { defineConfig } from 'tsup';
 export default defineConfig({
     entry: ['src/index.ts'],
     format: ['cjs', 'esm'],
-    dts: false, // Disabled due to chokidar type issues
+    dts: true,
     clean: true,
     sourcemap: true,
     external: [

@@ -13,8 +13,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch"
+    "build": "echo 'CLI package does not require build'",
+    "dev": "echo 'CLI package does not require dev build'"
   },
   "keywords": [
     "panorama",

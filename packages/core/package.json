@@ -42,7 +42,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "test:bench": "vitest bench",
+    "docs": "typedoc",
+    "docs:watch": "typedoc --watch"
   },
   "peerDependencies": {
     "three": "^0.160.0"

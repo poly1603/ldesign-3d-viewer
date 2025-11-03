@@ -88,7 +88,7 @@ onMounted(() => {
       enablePerformanceMonitor: true,
     }
 
-    viewerInstance.value = new CoreViewer(options, eventBus)
+    viewerInstance.value = new CoreViewer(options)
 
     // 订阅事件
     eventBus.on('image:loading', ({ progress }) => {
