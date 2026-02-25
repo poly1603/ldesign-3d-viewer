@@ -1,8 +1,8 @@
 {
-  "name": "@panorama-viewer/vue",
+  "name": "@ldesign/3d-viewer-vue",
   "version": "1.0.0",
-  "description": "Vue 3 wrapper for panorama viewer",
-  "author": "",
+  "description": "Vue 3 components for @ldesign/3d-viewer",
+  "author": "LDesign Team",
   "license": "MIT",
   "keywords": [
     "panorama",
@@ -36,12 +36,12 @@
     "clean": "rimraf dist"
   },
   "peerDependencies": {
-    "@panorama-viewer/core": "workspace:*",
+    "@ldesign/3d-viewer": "workspace:*",
     "three": "^0.160.0",
     "vue": "^3.3.0"
   },
   "dependencies": {
-    "@panorama-viewer/core": "workspace:*"
+    "@ldesign/3d-viewer": "workspace:*"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^2.6.0",

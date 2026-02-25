@@ -16,6 +16,12 @@ export type {
   Dimensions,
   TextureInfo,
   SphericalPosition,
+  CompassOptions,
+  ZoomIndicatorOptions as ZoomIndicatorConfig,
+  AutoTourOptions as AutoTourConfig,
+  TourScene,
+  HelpOverlayOptions as HelpOverlayConfig,
+  GyroscopeIndicatorOptions as GyroscopeIndicatorConfig,
 } from './types'
 
 // Core systems
@@ -182,3 +188,31 @@ export type { TimelineFrame, TimelineConfig } from './tools/TimelinePlayer'
 // 新增: 安全功能
 export { AccessControl } from './security/AccessControl'
 export type { Permission, Role, AccessControlConfig, WatermarkConfig } from './security/AccessControl'
+
+// 新增: UI组件
+export { HotspotMarker } from './components/HotspotMarker'
+export type { Marker, MarkerOptions } from './components/HotspotMarker'
+
+export { ViewIndicator } from './components/ViewIndicator'
+export type { ViewIndicatorOptions } from './components/ViewIndicator'
+
+export { LoadingIndicator } from './components/LoadingIndicator'
+export type { LoadingIndicatorOptions } from './components/LoadingIndicator'
+
+export { ZoomIndicator } from './components/ZoomIndicator'
+export type { ZoomIndicatorOptions } from './components/ZoomIndicator'
+
+export { AutoTourControl } from './components/AutoTourControl'
+export type { AutoTourOptions, TourScene } from './components/AutoTourControl'
+
+export { SharePanel } from './components/SharePanel'
+export type { SharePanelOptions } from './components/SharePanel'
+
+export { HelpOverlay } from './components/HelpOverlay'
+export type { HelpOverlayOptions } from './components/HelpOverlay'
+
+export { GyroscopeIndicator } from './components/GyroscopeIndicator'
+export type { GyroscopeIndicatorOptions } from './components/GyroscopeIndicator'
+
+export { UIToolbar } from './components/UIToolbar'
+export type { UIToolbarOptions } from './components/UIToolbar'

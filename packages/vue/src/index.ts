@@ -15,4 +15,4 @@ export type {
   CubemapImages,
   QualityPreset,
   PerformanceStats,
-} from '@panorama-viewer/core'
+} from '@ldesign/3d-viewer'

@@ -11,7 +11,7 @@ import {
   PanoramaViewer,
   type PerformanceStats,
   type ViewerOptions,
-} from '@panorama-viewer/core'
+} from '@ldesign/3d-viewer'
 
 export interface UsePanoramaViewerOptions extends Omit<ViewerOptions, 'container'> {
   /** 自动初始化（默认 true） */

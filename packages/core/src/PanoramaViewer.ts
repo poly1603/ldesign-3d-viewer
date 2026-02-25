@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import type { CubemapImages, Hotspot, IPanoramaViewer, ViewLimits, ViewerOptions } from './types'
+import type { CubemapImages, Hotspot, IPanoramaViewer, TourScene, ViewLimits, ViewerOptions } from './types'
 import { TouchControls } from './controls/TouchControls'
 import { GyroscopeControls } from './controls/GyroscopeControls'
 import { KeyboardControls } from './controls/KeyboardControls'
@@ -7,6 +7,14 @@ import { AdvancedGestureControls } from './controls/AdvancedGestureControls'
 import { HotspotManager } from './utils/HotspotManager'
 import { TextureCache } from './utils/TextureCache'
 import { MiniMap } from './components/MiniMap'
+import { LoadingIndicator } from './components/LoadingIndicator'
+import { ViewIndicator } from './components/ViewIndicator'
+import { HotspotMarker } from './components/HotspotMarker'
+import { UIToolbar } from './components/UIToolbar'
+import { ZoomIndicator } from './components/ZoomIndicator'
+import { AutoTourControl } from './components/AutoTourControl'
+import { HelpOverlay } from './components/HelpOverlay'
+import { GyroscopeIndicator } from './components/GyroscopeIndicator'
 import { PerformanceMonitor } from './utils/PerformanceMonitor'
 import { AdaptiveQuality } from './utils/AdaptiveQuality'
 import { ImagePreloader } from './utils/ImagePreloader'
@@ -33,6 +41,14 @@ export class PanoramaViewer implements IPanoramaViewer {
   private hotspotManager: HotspotManager
   private textureCache: TextureCache
   private miniMap: MiniMap | null = null
+  private loadingIndicator: LoadingIndicator | null = null
+  private viewIndicator: ViewIndicator | null = null
+  private hotspotMarker: HotspotMarker | null = null
+  private uiToolbar: UIToolbar | null = null
+  private zoomIndicator: ZoomIndicator | null = null
+  private autoTourControl: AutoTourControl | null = null
+  private helpOverlay: HelpOverlay | null = null
+  private gyroscopeIndicator: GyroscopeIndicator | null = null
   private performanceMonitor: PerformanceMonitor | null = null
   private adaptiveQuality: AdaptiveQuality | null = null
   private imagePreloader: ImagePreloader | null = null
@@ -56,6 +72,12 @@ export class PanoramaViewer implements IPanoramaViewer {
   // Transition state
   private isTransitioning: boolean = false
   private transitionOpacity: number = 1
+
+  // Entrance animation state
+  private entranceAnimationEnabled: boolean = false
+  private entranceAnimationDuration: number = 1000
+  private initialPosition?: { x: number, y: number, z: number }
+  private initialRotation?: { pitch: number, yaw: number }
 
   constructor(options: ViewerOptions) {
     // Check WebGL support
@@ -89,10 +111,25 @@ export class PanoramaViewer implements IPanoramaViewer {
       advancedGestures: options.advancedGestures ?? false,
       useGPUInstancing: options.useGPUInstancing ?? true,
       preloadImages: options.preloadImages ?? [],
+      compass: options.compass ?? true,
+      entranceAnimation: options.entranceAnimation ?? false,
+      entranceAnimationDuration: options.entranceAnimationDuration ?? 1000,
+      initialPosition: options.initialPosition,
+      initialRotation: options.initialRotation,
+      zoomIndicator: options.zoomIndicator ?? false,
+      autoTour: options.autoTour ?? false,
+      tourScenes: options.tourScenes ?? [],
+      helpOverlay: options.helpOverlay ?? false,
+      gyroscopeIndicator: options.gyroscopeIndicator ?? false,
+      onSceneChange: options.onSceneChange,
     }
 
     this.container = this.options.container
     this.viewLimits = this.options.viewLimits ?? null
+    this.entranceAnimationEnabled = this.options.entranceAnimation ?? false
+    this.entranceAnimationDuration = this.options.entranceAnimationDuration ?? 1000
+    this.initialPosition = this.options.initialPosition
+    this.initialRotation = this.options.initialRotation
 
     // Initialize Three.js components
     this.scene = new THREE.Scene()
@@ -130,8 +167,30 @@ export class PanoramaViewer implements IPanoramaViewer {
     // Initialize hotspot manager
     this.hotspotManager = new HotspotManager(this.container, this.camera, this.scene)
 
-    // Initialize mini map
-    this.miniMap = new MiniMap(this.container, this.camera)
+    // Initialize mini map / compass
+    const compassOptions = typeof this.options.compass === 'boolean'
+      ? { enabled: this.options.compass }
+      : this.options.compass
+    this.miniMap = new MiniMap(this.container, this.camera, compassOptions)
+
+    // Initialize loading indicator
+    this.loadingIndicator = new LoadingIndicator(this.container, {
+      style: 'circular',
+      showPercentage: true,
+    })
+
+    // Initialize view indicator
+    this.viewIndicator = new ViewIndicator(this.container, this.camera, {
+      enabled: false, // 默认关闭，可以通过API开启
+      style: 'compact',
+      position: 'top-left',
+    })
+
+    // Initialize hotspot marker
+    this.hotspotMarker = new HotspotMarker(this.container, this.camera, this.scene)
+
+    // Initialize UI toolbar and components
+    this.initializeUIComponents()
 
     // Initialize performance monitor
     if (this.options.enablePerformanceMonitor) {
@@ -202,8 +261,13 @@ export class PanoramaViewer implements IPanoramaViewer {
     // Setup event listeners
     this.setupEventListeners()
 
-    // Load initial image
-    this.loadImage(this.options.image)
+    // Load initial image with entrance animation if enabled
+    if (this.entranceAnimationEnabled) {
+      this.loadImageWithEntranceAnimation(this.options.image)
+    }
+    else {
+      this.loadImage(this.options.image)
+    }
 
     // Start render loop
     if (!this.options.renderOnDemand) {
@@ -216,6 +280,93 @@ export class PanoramaViewer implements IPanoramaViewer {
     // Enable gyroscope on mobile if requested
     if (this.options.gyroscope && this.isMobileDevice()) {
       this.enableGyroscope()
+    }
+  }
+
+  /**
+   * Initialize UI components (toolbar, zoom indicator, help, etc.)
+   */
+  private initializeUIComponents(): void {
+    // Create UI toolbar for right side components
+    this.uiToolbar = new UIToolbar(this.container, {
+      position: 'right',
+      margin: 16,
+      gap: 8,
+    })
+
+    // Initialize zoom indicator
+    const zoomOpts = typeof this.options.zoomIndicator === 'boolean'
+      ? { enabled: this.options.zoomIndicator }
+      : this.options.zoomIndicator
+    if (zoomOpts?.enabled) {
+      const zoomSlot = this.uiToolbar.addSlot('zoom', 10)
+      this.zoomIndicator = new ZoomIndicator(zoomSlot, {
+        ...zoomOpts,
+        useSlot: true,
+        minZoom: this.options.minFov,
+        maxZoom: this.options.maxFov,
+        defaultZoom: this.options.fov,
+        onZoomChange: (fov) => {
+          this.setFov(fov)
+        },
+      })
+    }
+
+    // Initialize help overlay
+    const helpOpts = typeof this.options.helpOverlay === 'boolean'
+      ? { enabled: this.options.helpOverlay }
+      : this.options.helpOverlay
+    if (helpOpts?.enabled) {
+      const helpSlot = this.uiToolbar.addSlot('help', 20)
+      this.helpOverlay = new HelpOverlay(helpSlot, {
+        ...helpOpts,
+        useSlot: true,
+        overlayContainer: this.container, // Overlay 挂载到主容器
+      })
+    }
+
+    // Initialize gyroscope indicator (only on mobile)
+    const gyroOpts = typeof this.options.gyroscopeIndicator === 'boolean'
+      ? { enabled: this.options.gyroscopeIndicator }
+      : this.options.gyroscopeIndicator
+    if (gyroOpts?.enabled && this.isMobileDevice()) {
+      const gyroSlot = this.uiToolbar.addSlot('gyroscope', 30)
+      this.gyroscopeIndicator = new GyroscopeIndicator(gyroSlot, {
+        ...gyroOpts,
+        useSlot: true,
+        onGyroToggle: (enabled) => {
+          if (enabled) {
+            this.enableGyroscope()
+          } else {
+            this.disableGyroscope()
+          }
+        },
+      })
+    }
+
+    // Initialize auto tour control (bottom center)
+    const tourOpts = typeof this.options.autoTour === 'boolean'
+      ? { enabled: this.options.autoTour }
+      : this.options.autoTour
+    if (tourOpts?.enabled) {
+      this.autoTourControl = new AutoTourControl(this.container, {
+        ...tourOpts,
+        position: 'bottom',
+        onSceneChange: async (index, scene) => {
+          // Load the scene image if provided
+          if (scene.image) {
+            await this.loadImage(scene.image, true)
+            // 加载完成后通知 AutoTourControl 开始计时
+            this.autoTourControl?.onSceneLoaded()
+          }
+          // Call user's callback if provided
+          this.options.onSceneChange?.(index, scene)
+        },
+      })
+      // Set initial scenes if provided
+      if (this.options.tourScenes && this.options.tourScenes.length > 0) {
+        this.autoTourControl.setScenes(this.options.tourScenes)
+      }
     }
   }
 
@@ -274,6 +425,12 @@ export class PanoramaViewer implements IPanoramaViewer {
       Math.min(this.options.maxFov, this.camera.fov + delta),
     )
     this.camera.updateProjectionMatrix()
+
+    // Sync zoom indicator
+    if (this.zoomIndicator) {
+      this.zoomIndicator.setZoom(this.camera.fov)
+    }
+
     this.requestRender()
   }
 
@@ -281,8 +438,9 @@ export class PanoramaViewer implements IPanoramaViewer {
     const euler = new THREE.Euler(0, 0, 0, 'YXZ')
     euler.setFromQuaternion(this.camera.quaternion)
 
-    euler.y -= deltaX
-    euler.x -= deltaY
+    // 自然拖动方向：鼠标向左拖，视角向左转（场景向右移动）
+    euler.y += deltaX
+    euler.x += deltaY
 
     // Apply view limits
     if (this.viewLimits) {
@@ -327,24 +485,149 @@ export class PanoramaViewer implements IPanoramaViewer {
     this.onWindowResize()
   }
 
-  public async loadImage(url: string | CubemapImages, transition: boolean = false): Promise<void> {
+  public async loadImage(url: string | CubemapImages, transition: boolean = false, playAnimation: boolean = false): Promise<void> {
     if (transition && !this.isTransitioning) {
       await this.loadWithTransition(url)
+    }
+    else if (playAnimation || this.entranceAnimationEnabled) {
+      // 如果启用了动画或明确请求播放动画，使用动画加载
+      await this.loadImageWithAnimation(url)
     }
     else {
       await this.loadDirect(url)
     }
   }
 
+  /**
+   * Load image with entrance animation (initial load)
+   */
+  private async loadImageWithEntranceAnimation(url: string | CubemapImages): Promise<void> {
+    // Load image first (will show loading indicator with progress)
+    await this.loadDirect(url)
+
+    // Set initial sphere to invisible for animation
+    if (this.sphere) {
+      (this.sphere.material as THREE.MeshBasicMaterial).opacity = 0;
+      (this.sphere.material as THREE.MeshBasicMaterial).transparent = true
+    }
+
+    // Set initial camera position/rotation if provided
+    if (this.initialRotation) {
+      const pitchRad = THREE.MathUtils.degToRad(this.initialRotation.pitch)
+      const yawRad = THREE.MathUtils.degToRad(this.initialRotation.yaw)
+      const euler = new THREE.Euler(pitchRad, yawRad, 0, 'YXZ')
+      this.camera.quaternion.setFromEuler(euler)
+    }
+
+    // Animate entrance
+    await this.playEntranceAnimation()
+  }
+
+  /**
+   * Load image with animation (for scene switching)
+   */
+  private async loadImageWithAnimation(url: string | CubemapImages): Promise<void> {
+    // Load image first (will show loading indicator with progress)
+    await this.loadDirect(url)
+
+    // Set initial sphere to invisible for animation
+    if (this.sphere) {
+      (this.sphere.material as THREE.MeshBasicMaterial).opacity = 0;
+      (this.sphere.material as THREE.MeshBasicMaterial).transparent = true
+    }
+
+    // Animate entrance (without changing initial rotation)
+    await this.playEntranceAnimation()
+  }
+
+  /**
+   * Play entrance animation
+   */
+  private async playEntranceAnimation(): Promise<void> {
+    return new Promise((resolve) => {
+      const startTime = Date.now()
+      const duration = this.entranceAnimationDuration
+
+      // Store initial rotation if set
+      const initialEuler = new THREE.Euler()
+      initialEuler.setFromQuaternion(this.camera.quaternion)
+      const initialYaw = initialEuler.y
+      const initialPitch = initialEuler.x
+
+      const animate = () => {
+        const elapsed = Date.now() - startTime
+        const progress = Math.min(elapsed / duration, 1)
+
+        // Easing function (easeOutCubic)
+        const eased = 1 - Math.pow(1 - progress, 3)
+
+        if (this.sphere) {
+          const material = this.sphere.material as THREE.MeshBasicMaterial
+          material.opacity = eased
+
+          // 更大的缩放效果，从zoom out到zoom in
+          const startFov = this.options.fov + 30
+          const targetFov = this.options.fov
+          this.camera.fov = startFov - (startFov - targetFov) * eased
+
+          // 更明显的旋转动画（如果没有指定初始角度）
+          if (!this.initialRotation) {
+            const rotationAmount = 0.5 // 增加旋转角度
+            const currentRotation = rotationAmount * (1 - eased)
+            // 添加轻微的上下摇动
+            const pitchOffset = Math.sin(progress * Math.PI) * 0.1
+            const euler = new THREE.Euler(
+              initialPitch + pitchOffset,
+              initialYaw + currentRotation,
+              0,
+              'YXZ'
+            )
+            this.camera.quaternion.setFromEuler(euler)
+          }
+
+          this.camera.updateProjectionMatrix()
+        }
+
+        this.requestRender()
+
+        if (progress < 1) {
+          requestAnimationFrame(animate)
+        }
+        else {
+          // Reset to non-transparent after animation
+          if (this.sphere) {
+            (this.sphere.material as THREE.MeshBasicMaterial).transparent = false
+          }
+          resolve()
+        }
+      }
+      animate()
+    })
+  }
+
   private async loadDirect(url: string | CubemapImages): Promise<void> {
     return new Promise((resolve, reject) => {
       (async () => {
         try {
+          // Show loading indicator
+          if (this.loadingIndicator) {
+            this.loadingIndicator.show(0)
+          }
+
           let newTexture: THREE.Texture
 
           if (typeof url === 'string') {
             // Equirectangular format
-            newTexture = await this.textureCache.load(url, this.options.onProgress)
+            newTexture = await this.textureCache.load(url, (progress) => {
+              // Update loading progress
+              if (this.loadingIndicator) {
+                this.loadingIndicator.updateProgress(progress)
+              }
+              // Call user's onProgress callback
+              if (this.options.onProgress) {
+                this.options.onProgress(progress)
+              }
+            })
             newTexture.colorSpace = THREE.SRGBColorSpace
           }
           else {
@@ -362,10 +645,19 @@ export class PanoramaViewer implements IPanoramaViewer {
           // Create or update sphere/box
           this.updateGeometry()
 
+          // Hide loading indicator
+          if (this.loadingIndicator) {
+            this.loadingIndicator.hide()
+          }
+
           this.requestRender()
           resolve()
         }
         catch (error) {
+          // Hide loading indicator on error
+          if (this.loadingIndicator) {
+            this.loadingIndicator.hide()
+          }
           reject(new Error(`Failed to load image: ${error}`))
         }
       })()
@@ -494,6 +786,16 @@ export class PanoramaViewer implements IPanoramaViewer {
 
   public setRotation(x: number, y: number, z: number): void {
     this.camera.rotation.set(x, y, z)
+    this.requestRender()
+  }
+
+  public getFov(): number {
+    return this.camera.fov
+  }
+
+  public setFov(fov: number): void {
+    this.camera.fov = Math.max(this.options.minFov, Math.min(this.options.maxFov, fov))
+    this.camera.updateProjectionMatrix()
     this.requestRender()
   }
 
@@ -634,6 +936,16 @@ export class PanoramaViewer implements IPanoramaViewer {
     // Update mini map
     if (this.miniMap) {
       this.miniMap.update()
+    }
+
+    // Update view indicator
+    if (this.viewIndicator) {
+      this.viewIndicator.update()
+    }
+
+    // Update hotspot marker
+    if (this.hotspotMarker) {
+      this.hotspotMarker.update()
     }
   }
 
@@ -795,6 +1107,224 @@ export class PanoramaViewer implements IPanoramaViewer {
     }
   }
 
+  /**
+   * Set compass options
+   */
+  public setCompassOptions(options: any): void {
+    if (this.miniMap) {
+      this.miniMap.setOptions(options)
+    }
+  }
+
+  /**
+   * Get compass options
+   */
+  public getCompassOptions(): any {
+    return this.miniMap?.getOptions() ?? null
+  }
+
+  /**
+   * Check if compass is visible
+   */
+  public isCompassVisible(): boolean {
+    return this.miniMap?.isVisible() ?? false
+  }
+
+  /**
+   * Show/hide loading indicator
+   */
+  public showLoading(progress: number = 0): void {
+    this.loadingIndicator?.show(progress)
+  }
+
+  public hideLoading(): void {
+    this.loadingIndicator?.hide()
+  }
+
+  /**
+   * Set loading indicator options
+   */
+  public setLoadingOptions(options: any): void {
+    this.loadingIndicator?.setOptions(options)
+  }
+
+  /**
+   * Show/hide view indicator
+   */
+  public showViewIndicator(): void {
+    this.viewIndicator?.show()
+  }
+
+  public hideViewIndicator(): void {
+    this.viewIndicator?.hide()
+  }
+
+  public toggleViewIndicator(): void {
+    this.viewIndicator?.toggle()
+  }
+
+  /**
+   * Set view indicator options
+   */
+  public setViewIndicatorOptions(options: any): void {
+    this.viewIndicator?.setOptions(options)
+  }
+
+  /**
+   * Add marker to hotspot marker system
+   */
+  public addMarker(marker: any): void {
+    this.hotspotMarker?.addMarker(marker)
+  }
+
+  /**
+   * Remove marker from hotspot marker system
+   */
+  public removeMarker(id: string): void {
+    this.hotspotMarker?.removeMarker(id)
+  }
+
+  /**
+   * Clear all markers
+   */
+  public clearMarkers(): void {
+    this.hotspotMarker?.clearMarkers()
+  }
+
+  /**
+   * Get all markers
+   */
+  public getMarkers(): any[] {
+    return this.hotspotMarker?.getMarkers() ?? []
+  }
+
+  // ==================== Zoom Indicator APIs ====================
+
+  /**
+   * Show zoom indicator
+   */
+  public showZoomIndicator(): void {
+    this.zoomIndicator?.show()
+  }
+
+  /**
+   * Hide zoom indicator
+   */
+  public hideZoomIndicator(): void {
+    this.zoomIndicator?.hide()
+  }
+
+  /**
+   * Toggle zoom indicator visibility
+   */
+  public toggleZoomIndicator(): void {
+    this.zoomIndicator?.toggle()
+  }
+
+  // ==================== Auto Tour APIs ====================
+
+  /**
+   * Set auto tour scenes
+   */
+  public setAutoTourScenes(scenes: TourScene[]): void {
+    this.autoTourControl?.setScenes(scenes)
+  }
+
+  /**
+   * Start auto tour
+   */
+  public startAutoTour(): void {
+    this.autoTourControl?.play()
+  }
+
+  /**
+   * Stop auto tour
+   */
+  public stopAutoTour(): void {
+    this.autoTourControl?.pause()
+  }
+
+  /**
+   * Go to next scene in auto tour
+   */
+  public nextTourScene(): void {
+    this.autoTourControl?.next()
+  }
+
+  /**
+   * Go to previous scene in auto tour
+   */
+  public prevTourScene(): void {
+    this.autoTourControl?.prev()
+  }
+
+  /**
+   * Go to specific scene in auto tour
+   */
+  public goToTourScene(index: number): void {
+    this.autoTourControl?.goTo(index)
+  }
+
+  /**
+   * Show auto tour control
+   */
+  public showAutoTourControl(): void {
+    this.autoTourControl?.show()
+  }
+
+  /**
+   * Hide auto tour control
+   */
+  public hideAutoTourControl(): void {
+    this.autoTourControl?.hide()
+  }
+
+  // ==================== Help Overlay APIs ====================
+
+  /**
+   * Show help overlay
+   */
+  public showHelpOverlay(): void {
+    this.helpOverlay?.showOverlay()
+  }
+
+  /**
+   * Hide help overlay
+   */
+  public hideHelpOverlay(): void {
+    this.helpOverlay?.hideOverlay()
+  }
+
+  /**
+   * Show help button
+   */
+  public showHelpButton(): void {
+    this.helpOverlay?.show()
+  }
+
+  /**
+   * Hide help button
+   */
+  public hideHelpButton(): void {
+    this.helpOverlay?.hide()
+  }
+
+  // ==================== Gyroscope Indicator APIs ====================
+
+  /**
+   * Show gyroscope indicator
+   */
+  public showGyroscopeIndicator(): void {
+    this.gyroscopeIndicator?.show()
+  }
+
+  /**
+   * Hide gyroscope indicator
+   */
+  public hideGyroscopeIndicator(): void {
+    this.gyroscopeIndicator?.hide()
+  }
+
   public dispose(): void {
     this.isDisposed = true
 
@@ -818,6 +1348,35 @@ export class PanoramaViewer implements IPanoramaViewer {
 
     if (this.miniMap) {
       this.miniMap.dispose()
+    }
+
+    if (this.loadingIndicator) {
+      this.loadingIndicator.dispose()
+    }
+
+    if (this.viewIndicator) {
+      this.viewIndicator.dispose()
+    }
+
+    if (this.hotspotMarker) {
+      this.hotspotMarker.dispose()
+    }
+
+    // Dispose new UI components
+    if (this.zoomIndicator) {
+      this.zoomIndicator.dispose()
+    }
+    if (this.autoTourControl) {
+      this.autoTourControl.dispose()
+    }
+    if (this.helpOverlay) {
+      this.helpOverlay.dispose()
+    }
+    if (this.gyroscopeIndicator) {
+      this.gyroscopeIndicator.dispose()
+    }
+    if (this.uiToolbar) {
+      this.uiToolbar.dispose()
     }
 
     if (this.imagePreloader) {

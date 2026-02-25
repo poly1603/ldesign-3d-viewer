@@ -100,42 +100,84 @@ export class TextureCache {
       const node = this.cache.get(url)!
       node.lastAccessed = Date.now()
       logger.debug(`Texture cache hit: ${url}`)
+      if (onProgress) onProgress(100)
       return node.texture
     }
 
     logger.debug(`Loading texture: ${url}`)
 
-    return new Promise((resolve, reject) => {
-      this.loader.load(
-        url,
-        (texture) => {
-          const size = this.estimateTextureSize(texture)
-          this.currentSize += size
+    // 使用 fetch + blob 方式获取真实进度
+    try {
+      const response = await fetch(url)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
 
-          this.cache.set(url, {
-            texture,
-            lastAccessed: Date.now(),
-            size,
-          })
+      const contentLength = response.headers.get('content-length')
+      const total = contentLength ? parseInt(contentLength, 10) : 0
+      
+      let loaded = 0
+      const reader = response.body?.getReader()
+      const chunks: Uint8Array[] = []
 
-          // 检查是否需要驱逐
-          this.evictIfNeeded()
-
-          logger.debug(`Texture loaded: ${url} (${(size / 1024 / 1024).toFixed(2)} MB)`)
-          resolve(texture)
-        },
-        (event) => {
-          if (onProgress && event.lengthComputable) {
-            const progress = (event.loaded / event.total) * 100
+      if (reader && total > 0) {
+        // 有 content-length，可以显示真实进度
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          
+          chunks.push(value)
+          loaded += value.length
+          
+          if (onProgress) {
+            const progress = (loaded / total) * 100
             onProgress(progress)
           }
-        },
-        (error) => {
-          logger.error(`Failed to load texture: ${url}`, error)
-          reject(new Error(`Failed to load texture: ${error}`))
-        },
-      )
-    })
+        }
+      } else {
+        // 没有 content-length，使用模拟进度
+        const blob = await response.blob()
+        chunks.push(new Uint8Array(await blob.arrayBuffer()))
+        if (onProgress) onProgress(100)
+      }
+
+      // 合并 chunks 并创建 blob URL
+      const blob = new Blob(chunks)
+      const blobUrl = URL.createObjectURL(blob)
+
+      // 使用 blob URL 加载纹理
+      return new Promise((resolve, reject) => {
+        this.loader.load(
+          blobUrl,
+          (texture) => {
+            // 释放 blob URL
+            URL.revokeObjectURL(blobUrl)
+            
+            const size = this.estimateTextureSize(texture)
+            this.currentSize += size
+
+            this.cache.set(url, {
+              texture,
+              lastAccessed: Date.now(),
+              size,
+            })
+
+            this.evictIfNeeded()
+            logger.debug(`Texture loaded: ${url} (${(size / 1024 / 1024).toFixed(2)} MB)`)
+            resolve(texture)
+          },
+          undefined,
+          (error) => {
+            URL.revokeObjectURL(blobUrl)
+            logger.error(`Failed to load texture: ${url}`, error)
+            reject(new Error(`Failed to load texture: ${error}`))
+          },
+        )
+      })
+    } catch (error) {
+      logger.error(`Failed to fetch texture: ${url}`, error)
+      throw new Error(`Failed to load texture: ${error}`)
+    }
   }
 
   public get(url: string): THREE.Texture | undefined {

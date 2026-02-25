@@ -119,6 +119,28 @@ export interface ViewerOptions {
   useGPUInstancing?: boolean
   /** Images to preload in background */
   preloadImages?: string[]
+  /** Compass/MiniMap options */
+  compass?: CompassOptions | boolean
+  /** Enable entrance animation (default: false) */
+  entranceAnimation?: boolean
+  /** Entrance animation duration in milliseconds (default: 1000) */
+  entranceAnimationDuration?: number
+  /** Initial camera position for entrance animation */
+  initialPosition?: { x: number, y: number, z: number }
+  /** Initial camera rotation for entrance animation (in degrees) */
+  initialRotation?: { pitch: number, yaw: number }
+  /** Zoom indicator options */
+  zoomIndicator?: ZoomIndicatorOptions | boolean
+  /** Auto tour control options */
+  autoTour?: AutoTourOptions | boolean
+  /** Tour scenes for auto tour */
+  tourScenes?: TourScene[]
+  /** Help overlay options */
+  helpOverlay?: HelpOverlayOptions | boolean
+  /** Gyroscope indicator options (mobile only) */
+  gyroscopeIndicator?: GyroscopeIndicatorOptions | boolean
+  /** Scene change callback for auto tour */
+  onSceneChange?: (index: number, scene: TourScene) => void
 }
 
 /**
@@ -334,4 +356,124 @@ export interface TextureInfo {
   size: number
   /** Format */
   format: string
+}
+
+/**
+ * Compass/MiniMap options
+ */
+export interface CompassOptions {
+  /** Show compass (default: true) */
+  enabled?: boolean
+  /** Compass size in pixels (default: 100) */
+  size?: number
+  /** Position on screen - used when not in unified toolbar */
+  position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
+  /** Margin from edge in pixels (default: 16) */
+  margin?: number
+  /** Background color (default: 'rgba(0, 0, 0, 0.6)') */
+  backgroundColor?: string
+  /** Pointer/needle color (default: '#3b82f6') */
+  pointerColor?: string
+  /** North indicator color (default: '#ef4444') */
+  northColor?: string
+  /** Text color (default: 'rgba(255, 255, 255, 0.9)') */
+  textColor?: string
+  /** Show cardinal directions N/S/E/W (default: true) */
+  showCardinals?: boolean
+  /** Show degree numbers (default: false) */
+  showDegrees?: boolean
+  /** Compass style */
+  style?: 'modern' | 'classic' | 'minimal'
+}
+
+/**
+ * Zoom indicator options
+ */
+export interface ZoomIndicatorOptions {
+  /** Show zoom indicator (default: false) */
+  enabled?: boolean
+  /** Show +/- buttons (default: true) */
+  showButtons?: boolean
+  /** Show slider (default: true) */
+  showSlider?: boolean
+  /** Show zoom level text (default: true) */
+  showLevel?: boolean
+  /** Background color */
+  backgroundColor?: string
+  /** Button color */
+  buttonColor?: string
+  /** Active/highlight color */
+  activeColor?: string
+  /** Text color */
+  textColor?: string
+}
+
+/**
+ * Auto tour control options
+ */
+export interface AutoTourOptions {
+  /** Show auto tour control (default: false) */
+  enabled?: boolean
+  /** Auto play interval in milliseconds (default: 5000) */
+  interval?: number
+  /** Auto start playing (default: false) */
+  autoStart?: boolean
+  /** Show progress bar (default: true) */
+  showProgress?: boolean
+  /** Background color */
+  backgroundColor?: string
+  /** Button color */
+  buttonColor?: string
+  /** Active/highlight color */
+  activeColor?: string
+  /** Text color */
+  textColor?: string
+}
+
+/**
+ * Tour scene definition
+ */
+export interface TourScene {
+  /** Unique scene ID */
+  id: string
+  /** Scene display name */
+  name: string
+  /** Scene thumbnail URL */
+  thumbnail?: string
+  /** Scene image URL */
+  image?: string
+}
+
+/**
+ * Help overlay options
+ */
+export interface HelpOverlayOptions {
+  /** Show help button (default: false) */
+  enabled?: boolean
+  /** Show help on first visit (default: false) */
+  showOnFirstVisit?: boolean
+  /** Background color */
+  backgroundColor?: string
+  /** Button color */
+  buttonColor?: string
+  /** Text color */
+  textColor?: string
+}
+
+/**
+ * Gyroscope indicator options
+ */
+export interface GyroscopeIndicatorOptions {
+  /** Show gyroscope indicator (default: false, only on mobile) */
+  enabled?: boolean
+  /** Auto enable gyroscope on load (default: false) */
+  autoEnable?: boolean
+  /** Background color */
+  backgroundColor?: string
+  /** Active state color */
+  activeColor?: string
+  /** Inactive state color */
+  inactiveColor?: string
+  /** Text color */
+  textColor?: string
 }

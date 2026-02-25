@@ -1,8 +1,8 @@
 {
-  "name": "@panorama-viewer/core",
+  "name": "@ldesign/3d-viewer",
   "version": "2.0.0",
   "description": "Enterprise-grade 360° panorama viewer with video, audio, VR/AR support",
-  "author": "",
+  "author": "LDesign Team",
   "license": "MIT",
   "keywords": [
     "panorama",

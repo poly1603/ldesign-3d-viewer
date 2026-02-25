@@ -19,7 +19,7 @@ export default defineConfig({
       fileName: format => `index.${format === 'es' ? 'esm' : 'cjs'}.js`,
     },
     rollupOptions: {
-      external: ['vue', 'three', '@panorama-viewer/core'],
+      external: ['vue', 'three', '@ldesign/3d-viewer'],
       output: {
         globals: {
           vue: 'Vue',

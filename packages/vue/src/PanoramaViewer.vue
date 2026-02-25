@@ -8,7 +8,7 @@ import {
   type PerformanceStats,
   type ViewLimits,
   type ViewerOptions,
-} from '@panorama-viewer/core'
+} from '@ldesign/3d-viewer'
 
 export interface PanoramaViewerProps {
   image: string | CubemapImages
